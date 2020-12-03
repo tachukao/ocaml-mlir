@@ -1,0 +1,35 @@
+(executable
+ (name gen_types)
+ (modules gen_types)
+ (libraries mlir.types ctypes ctypes.stubs))
+
+(executable
+ (name gen_stubs)
+ (modules gen_stubs)
+ (libraries mlir.stubs ctypes ctypes.stubs))
+
+(rule
+ (targets mlir_types.c)
+ (deps
+  (:stubgen ./gen_types.exe))
+ (action
+  (with-stdout-to
+   %{targets}
+   (run %{stubgen} -c))))
+
+(rule
+ (targets c_flags c_library_flags)
+ (deps
+  (:discover ../config/discover.exe))
+ (action
+  (run %{discover})))
+
+(rule
+ (targets gen_types_c.exe)
+ (deps
+  (:base mlir_types.c)
+  c_flags
+  c_library_flags)
+ (action
+  (bash
+    "%{cc} %{base} -I `dirname %{lib:ctypes:ctypes_cstubs_internals.h}` -I %{ocaml_where} $(< c_flags) $(< c_library_flags) -o %{targets}")))

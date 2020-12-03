@@ -1,0 +1,25 @@
+(library
+ (name wrapper)
+ (public_name mlir.wrapper)
+ (libraries mlir.stubs mlir.types ctypes.stubs ctypes ctypes.foreign)
+ (foreign_stubs
+  (language c)
+  (names mlir_stubs)
+  (flags
+   (:include c_flags.sexp)))
+ (c_library_flags
+  (:include c_library_flags.sexp)))
+
+(rule
+ (targets c_flags.sexp c_library_flags.sexp)
+ (deps
+  (:discover ../config/discover.exe))
+ (action
+  (run %{discover})))
+
+(rule
+ (targets mlir_stubs.c mlir_generated.ml)
+ (deps
+  (:gen ../gen/gen_stubs.exe))
+ (action
+  (run %{gen})))
