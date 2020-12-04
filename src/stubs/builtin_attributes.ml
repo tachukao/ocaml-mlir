@@ -92,7 +92,7 @@ module Bindings (F : FOREIGN) = struct
     let element_by_name =
       foreign
         "mlirDictionaryAttrGetElementByName"
-        (Typs.Attribute.t @-> string @-> returning Typs.Attribute.t)
+        (Typs.Attribute.t @-> Typs.StringRef.t @-> returning Typs.Attribute.t)
   end
 
   (*===----------------------------------------------------------------------===
@@ -194,7 +194,7 @@ module Bindings (F : FOREIGN) = struct
       foreign
         "mlirOpaqueAttrGet"
         (Typs.Context.t
-        @-> string
+        @-> Typs.StringRef.t
         @-> intptr_t
         @-> string
         @-> Typs.Type.t
@@ -204,7 +204,9 @@ module Bindings (F : FOREIGN) = struct
     (* Returns the namespace of the dialect with which the given opaque attribute
      * is associated. The namespace string is owned by the context. *)
     let namespace =
-      foreign "mlirOpaqueAttrGetDialectNamespace" (Typs.Attribute.t @-> returning string)
+      foreign
+        "mlirOpaqueAttrGetDialectNamespace"
+        (Typs.Attribute.t @-> returning Typs.StringRef.t)
 
 
     (* Returns the raw data as a string reference. The data remains live as long as
@@ -221,21 +223,20 @@ module Bindings (F : FOREIGN) = struct
     (* checks whether the given attribute is a string attribute. *)
     let is_string = foreign "mlirAttributeIsAString" (Typs.Attribute.t @-> returning bool)
 
-    (* Creates a string attribute in the given context containing the given string.
-     * The string need not be null-terminated and its length must be specified. *)
+    (* Creates a string attribute in the given context containing the given string. *)
     let get =
       foreign
         "mlirStringAttrGet"
-        (Typs.Context.t @-> intptr_t @-> string @-> returning Typs.Attribute.t)
+        (Typs.Context.t @-> Typs.StringRef.t @-> returning Typs.Attribute.t)
 
 
     (* Creates a string attribute in the given context containing the given string.
-     * The string need not be null-terminated and its length must be specified.
      * Additionally, the attribute has the given type. *)
+
     let typed_get =
       foreign
         "mlirStringAttrTypedGet"
-        (Typs.Type.t @-> intptr_t @-> string @-> returning Typs.Attribute.t)
+        (Typs.Type.t @-> Typs.StringRef.t @-> returning Typs.Attribute.t)
 
 
     (* Returns the attribute values as a string reference. The data remains live as
@@ -256,14 +257,12 @@ module Bindings (F : FOREIGN) = struct
 
     (* Creates a symbol reference attribute in the given context referencing a
      * symbol identified by the given string inside a list of nested references.
-     * Each of the references in the list must not be nested. The string need not be
-     * null-terminated and its length must be specified. *)
+     * Each of the references in the list must not be nested. *)
     let get =
       foreign
         "mlirSymbolRefAttrGet"
         (Typs.Context.t
-        @-> intptr_t
-        @-> string
+        @-> Typs.StringRef.t
         @-> intptr_t
         @-> ptr Typs.Attribute.t
         @-> returning Typs.Attribute.t)
@@ -311,12 +310,11 @@ module Bindings (F : FOREIGN) = struct
 
 
     (* Creates a flat symbol reference attribute in the given context referencing a
-     * symbol identified by the given string. The string need not be null-terminated
-     * and its length must be specified. *)
+     * symbol identified by the given string. *)
     let get =
       foreign
         "mlirFlatSymbolRefAttrGet"
-        (Typs.Context.t @-> intptr_t @-> string @-> returning Typs.Attribute.t)
+        (Typs.Context.t @-> Typs.StringRef.t @-> returning Typs.Attribute.t)
 
 
     (* Returns the referenced symbol as a string reference. The data remains live
@@ -512,16 +510,11 @@ module Bindings (F : FOREIGN) = struct
 
 
       (* Creates a dense elements attribute with the given shaped type from string
-       * elements. The strings need not be null-terminated and their lengths are
-       * provided as a separate argument co-indexed with the strs argument. *)
+       * elements. *)
       let string_get =
         foreign
           "mlirDenseElementsAttrStringGet"
-          (Typs.Type.t
-          @-> intptr_t
-          @-> ptr intptr_t
-          @-> ptr string
-          @-> returning Typs.Attribute.t)
+          (Typs.Type.t @-> intptr_t @-> (ptr Typs.StringRef.t) @-> returning Typs.Attribute.t)
 
 
       (* Creates a dense elements attribute that has the same data as the given dense
@@ -639,6 +632,7 @@ module Bindings (F : FOREIGN) = struct
           (Typs.Attribute.t @-> intptr_t @-> returning Typs.StringRef.t)
 
 
+      (* Returns the raw data of the given dense elements attribute. *)
       let raw_data =
         foreign
           "mlirDenseElementsAttrGetRawData"

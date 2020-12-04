@@ -47,9 +47,7 @@ module Bindings (F : FOREIGN) = struct
     let context = foreign "mlirDialectGetContext" (t @-> returning Typs.Context.t)
     let is_null = foreign "mlirDialectIsNull" (t @-> returning bool)
     let equal = foreign "mlirDialectEqual" (t @-> t @-> returning bool)
-
-    let namespace =
-      foreign "mlirDialectGetNamespace" (t @-> returning Typs.StringRef.t)
+    let namespace = foreign "mlirDialectGetNamespace" (t @-> returning Typs.StringRef.t)
   end
 
   (*===----------------------------------------------------------------------===
@@ -197,9 +195,7 @@ module Bindings (F : FOREIGN) = struct
 
 
     let name =
-      foreign
-        "mlirOperationGetName"
-        (Typs.Operation.t @-> returning Typs.Identifier.t)
+      foreign "mlirOperationGetName" (Typs.Operation.t @-> returning Typs.Identifier.t)
 
 
     let block =
@@ -271,18 +267,13 @@ module Bindings (F : FOREIGN) = struct
     let get_attribute_by_name =
       foreign
         "mlirOperationGetAttributeByName"
-        (Typs.Operation.t
-        @-> Typs.StringRef.t
-        @-> returning Typs.Attribute.t)
+        (Typs.Operation.t @-> Typs.StringRef.t @-> returning Typs.Attribute.t)
 
 
     let set_attribute_by_name =
       foreign
         "mlirOperationSetAttributeByName"
-        (Typs.Operation.t
-        @-> Typs.StringRef.t
-        @-> Typs.Attribute.t
-        @-> returning void)
+        (Typs.Operation.t @-> Typs.StringRef.t @-> Typs.Attribute.t @-> returning void)
 
 
     let remove_attribute_by_name =
@@ -349,9 +340,7 @@ module Bindings (F : FOREIGN) = struct
 
   module Block = struct
     let create =
-      foreign
-        "mlirBlockCreate"
-        (intptr_t @-> ptr Typs.Type.t @-> returning Typs.Block.t)
+      foreign "mlirBlockCreate" (intptr_t @-> ptr Typs.Type.t @-> returning Typs.Block.t)
 
 
     let destroy = foreign "mlirBlockDestroy" (Typs.Block.t @-> returning void)
@@ -362,9 +351,7 @@ module Bindings (F : FOREIGN) = struct
 
 
     let first_operation =
-      foreign
-        "mlirBlockGetFirstOperation"
-        (Typs.Block.t @-> returning Typs.Operation.t)
+      foreign "mlirBlockGetFirstOperation" (Typs.Block.t @-> returning Typs.Operation.t)
 
 
     let terminator =
@@ -386,19 +373,13 @@ module Bindings (F : FOREIGN) = struct
     let insert_owned_operation_after =
       foreign
         "mlirBlockInsertOwnedOperationAfter"
-        (Typs.Block.t
-        @-> Typs.Operation.t
-        @-> Typs.Operation.t
-        @-> returning void)
+        (Typs.Block.t @-> Typs.Operation.t @-> Typs.Operation.t @-> returning void)
 
 
     let insert_owned_operation_before =
       foreign
         "mlirBlockInsertOwnedOperationBefore"
-        (Typs.Block.t
-        @-> Typs.Operation.t
-        @-> Typs.Operation.t
-        @-> returning void)
+        (Typs.Block.t @-> Typs.Operation.t @-> Typs.Operation.t @-> returning void)
 
 
     let num_arguments =
@@ -406,9 +387,7 @@ module Bindings (F : FOREIGN) = struct
 
 
     let argument =
-      foreign
-        "mlirBlockGetArgument"
-        (Typs.Block.t @-> intptr_t @-> returning Typs.Value.t)
+      foreign "mlirBlockGetArgument" (Typs.Block.t @-> intptr_t @-> returning Typs.Value.t)
 
 
     let print =
@@ -427,8 +406,7 @@ module Bindings (F : FOREIGN) = struct
 
     (* Returns 1 if two values are equal, 0 otherwise. *)
     (* mlirValueEqual does not seem to be exported *)
-    (* let equal =
-      foreign "mlirValueEqual" (Typs.Value.t @-> Typs.Value.t @-> returning bool) *)
+    let equal = foreign "mlirValueEqual" (Typs.Value.t @-> Typs.Value.t @-> returning bool)
 
     (* Returns 1 if the value is a block argument, 0 otherwise. *)
     let is_block_argument =
@@ -451,9 +429,7 @@ module Bindings (F : FOREIGN) = struct
 
     (* Sets the type of the block argument to the given type. *)
     let block_argument_set_type =
-      foreign
-        "mlirBlockArgumentSetType"
-        (Typs.Value.t @-> Typs.Type.t @-> returning void)
+      foreign "mlirBlockArgumentSetType" (Typs.Value.t @-> Typs.Type.t @-> returning void)
 
 
     (* Returns an operation that produced this value as its result. Asserts if the
@@ -469,9 +445,7 @@ module Bindings (F : FOREIGN) = struct
 
 
     (* Returns the type of the value. *)
-    let get_type =
-      foreign "mlirValueGetType" (Typs.Value.t @-> returning Typs.Type.t)
-
+    let get_type = foreign "mlirValueGetType" (Typs.Value.t @-> returning Typs.Type.t)
 
     (* Prints the value to the standard error stream. *)
     let dump = foreign "mlirValueDump" (Typs.Value.t @-> returning void)
@@ -498,17 +472,13 @@ module Bindings (F : FOREIGN) = struct
 
 
     (* Gets the context that a type was created with. *)
-    let context =
-      foreign "mlirTypeGetContext" (Typs.Type.t @-> returning Typs.Context.t)
-
+    let context = foreign "mlirTypeGetContext" (Typs.Type.t @-> returning Typs.Context.t)
 
     (* Checks whether a type is null. *)
     let is_null = foreign "mlirTypeIsNull" (Typs.Type.t @-> returning bool)
 
     (* Checks if two types are equal. *)
-    let equal =
-      foreign "mlirTypeEqual" (Typs.Type.t @-> Typs.Type.t @-> returning bool)
-
+    let equal = foreign "mlirTypeEqual" (Typs.Type.t @-> Typs.Type.t @-> returning bool)
 
     (* Prints a location by sending chunks of the string representation and
    * forwarding `userData to `callback`. Note that the callback may be called
@@ -537,9 +507,7 @@ module Bindings (F : FOREIGN) = struct
 
     (* Gets the context that an attribute was created with. *)
     let context =
-      foreign
-        "mlirAttributeGetContext"
-        (Typs.Attribute.t @-> returning Typs.Context.t)
+      foreign "mlirAttributeGetContext" (Typs.Attribute.t @-> returning Typs.Context.t)
 
 
     (* Gets the type of this attribute. *)
@@ -573,9 +541,7 @@ module Bindings (F : FOREIGN) = struct
     let get_named_attribute =
       foreign
         "mlirNamedAttributeGet"
-        (Typs.StringRef.t
-        @-> Typs.Attribute.t
-        @-> returning Typs.NamedAttribute.t)
+        (Typs.StringRef.t @-> Typs.Attribute.t @-> returning Typs.NamedAttribute.t)
   end
 
   (* Identifier API *)
@@ -593,8 +559,6 @@ module Bindings (F : FOREIGN) = struct
 
 
     let to_string =
-      foreign
-        "mlirIdentifierStr"
-        (Typs.Identifier.t @-> returning Typs.StringRef.t)
+      foreign "mlirIdentifierStr" (Typs.Identifier.t @-> returning Typs.StringRef.t)
   end
 end

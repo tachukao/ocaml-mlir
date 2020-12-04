@@ -1,3 +1,4 @@
+mlir-c
 *.annot
 *.cmo
 *.cma

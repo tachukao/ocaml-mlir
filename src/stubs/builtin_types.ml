@@ -1,40 +1,31 @@
-//===-- mlir-c/StandardTypes.h - C API for MLIR Standard types ----*- C -*-===//
-//
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM
-// Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-//
-//===----------------------------------------------------------------------===//
+open Ctypes
 
-#ifndef MLIR_C_STANDARDTYPES_H
-#define MLIR_C_STANDARDTYPES_H
+module Bindings (F : FOREIGN) = struct
+  open F
 
-#include "mlir-c/AffineMap.h"
-#include "mlir-c/IR.h"
-#include <stdint.h>
+  (*===----------------------------------------------------------------------===
+   * Integer types.
+   *===----------------------------------------------------------------------===*)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+  module Integer = struct
+    (* Checks whether the given type is an integer type. *)
+    let is_integer = foreign "mlirTypeIsAInteger" (Typs.Type.t @-> returning bool)
 
-//===----------------------------------------------------------------------===//
-// Integer types.
-//===----------------------------------------------------------------------===//
+    (* Creates a signless integer type of the given bitwidth in the context. The
+     * type is owned by the context. *)
+    let get =
+      foreign "mlirIntegerTypeGet" (Typs.Context.t @-> uint @-> returning Typs.Type.t)
 
-/// Checks whether the given type is an integer type.
-MLIR_CAPI_EXPORTED bool mlirTypeIsAInteger(MlirType type);
 
-/** Creates a signless integer type of the given bitwidth in the context. The
- * type is owned by the context. */
-MLIR_CAPI_EXPORTED MlirType mlirIntegerTypeGet(MlirContext ctx,
-                                               unsigned bitwidth);
+    (* Creates a signed integer type of the given bitwidth in the context. The type
+     * is owned by the context. *)
+    let signed_get =
+      foreign
+        "mlirIntegerTypeSignedGet"
+        (Typs.Context.t @-> uint @-> returning Typs.Type.t)
+  end
 
-/** Creates a signed integer type of the given bitwidth in the context. The type
- * is owned by the context. */
-MLIR_CAPI_EXPORTED MlirType mlirIntegerTypeSignedGet(MlirContext ctx,
-                                                     unsigned bitwidth);
-
+  (*
 /** Creates an unsigned integer type of the given bitwidth in the context. The
  * type is owned by the context. */
 MLIR_CAPI_EXPORTED MlirType mlirIntegerTypeUnsignedGet(MlirContext ctx,
@@ -210,110 +201,158 @@ MLIR_CAPI_EXPORTED MlirType mlirUnrankedTensorTypeGet(MlirType elementType);
 MLIR_CAPI_EXPORTED MlirType
 mlirUnrankedTensorTypeGetChecked(MlirType elementType, MlirLocation loc);
 
-//===----------------------------------------------------------------------===//
-// Ranked / Unranked MemRef type.
-//===----------------------------------------------------------------------===//
+   *)
+  (*===----------------------------------------------------------------------===
+   * Ranked / Unranked MemRef type.
+   *===----------------------------------------------------------------------===*)
 
-/// Checks whether the given type is a MemRef type.
-MLIR_CAPI_EXPORTED bool mlirTypeIsAMemRef(MlirType type);
+  module MemRef = struct
+    (* Checks whether the given type is a MemRef type. *)
+    let is_memref = foreign "mlirTypeIsAMemRef" (Typs.Type.t @-> returning bool)
 
-/// Checks whether the given type is an UnrankedMemRef type.
-MLIR_CAPI_EXPORTED bool mlirTypeIsAUnrankedMemRef(MlirType type);
+    (* Checks whether the given type is an UnrankedMemRef type. *)
+    let is_unranked_memref =
+      foreign "mlirTypeIsAUnrankedMemRef" (Typs.Type.t @-> returning bool)
 
-/** Creates a MemRef type with the given rank and shape, a potentially empty
- * list of affine layout maps, the given memory space and element type, in the
- * same context as element type. The type is owned by the context. */
-MLIR_CAPI_EXPORTED MlirType mlirMemRefTypeGet(
-    MlirType elementType, intptr_t rank, const int64_t *shape, intptr_t numMaps,
-    MlirAttribute const *affineMaps, unsigned memorySpace);
 
-/** Creates a MemRef type with the given rank, shape, memory space and element
- * type in the same context as the element type. The type has no affine maps,
- * i.e. represents a default row-major contiguous memref. The type is owned by
- * the context. */
-MLIR_CAPI_EXPORTED MlirType mlirMemRefTypeContiguousGet(MlirType elementType,
-                                                        intptr_t rank,
-                                                        const int64_t *shape,
-                                                        unsigned memorySpace);
+    (* Creates a MemRef type with the given rank and shape, a potentially empty
+     * list of affine layout maps, the given memory space and element type, in the
+     * same context as element type. The type is owned by the context. *)
+    let get =
+      foreign
+        "mlirMemRefTypeGet"
+        (Typs.Type.t
+        @-> intptr_t
+        @-> ptr int64_t
+        @-> intptr_t
+        @-> ptr Typs.AffineMap.t
+        @-> uint
+        @-> returning Typs.Type.t)
 
-/** Same as "mlirMemRefTypeContiguousGet" but returns a nullptr wrapping
- * MlirType on illegal arguments, emitting appropriate diagnostics. */
-MLIR_CAPI_EXPORTED MlirType mlirMemRefTypeContiguousGetChecked(
-    MlirType elementType, intptr_t rank, const int64_t *shape,
-    unsigned memorySpace, MlirLocation loc);
 
-/** Creates an Unranked MemRef type with the given element type and in the given
- * memory space. The type is owned by the context of element type. */
-MLIR_CAPI_EXPORTED MlirType mlirUnrankedMemRefTypeGet(MlirType elementType,
-                                                      unsigned memorySpace);
+    (* Creates a MemRef type with the given rank, shape, memory space and element
+     * type in the same context as the element type. The type has no affine maps,
+     * i.e. represents a default row-major contiguous memref. The type is owned by
+     * the context. *)
+    let contiguous_get =
+      foreign
+        "mlirMemRefTypeContiguousGet"
+        (Typs.Type.t @-> intptr_t @-> ptr int64_t @-> uint @-> returning Typs.Type.t)
 
-/** Same as "mlirUnrankedMemRefTypeGet" but returns a nullptr wrapping
- * MlirType on illegal arguments, emitting appropriate diagnostics. */
-MLIR_CAPI_EXPORTED MlirType mlirUnrankedMemRefTypeGetChecked(
-    MlirType elementType, unsigned memorySpace, MlirLocation loc);
 
-/// Returns the number of affine layout maps in the given MemRef type.
-MLIR_CAPI_EXPORTED intptr_t mlirMemRefTypeGetNumAffineMaps(MlirType type);
+    (* Same as "mlirMemRefTypeContiguousGet" but returns a nullptr wrapping
+     * MlirType on illegal arguments, emitting appropriate diagnostics. *)
+    let contiguous_get_checked =
+      foreign
+        "mlirMemRefTypeContiguousGetChecked"
+        (Typs.Type.t
+        @-> intptr_t
+        @-> ptr int64_t
+        @-> uint
+        @-> Typs.Location.t
+        @-> returning Typs.Type.t)
 
-/// Returns the pos-th affine map of the given MemRef type.
-MLIR_CAPI_EXPORTED MlirAffineMap mlirMemRefTypeGetAffineMap(MlirType type,
-                                                            intptr_t pos);
 
-/// Returns the memory space of the given MemRef type.
-MLIR_CAPI_EXPORTED unsigned mlirMemRefTypeGetMemorySpace(MlirType type);
+    (* Creates an Unranked MemRef type with the given element type and in the given
+     * memory space. The type is owned by the context of element type. *)
+    let unranked_get =
+      foreign "mlirUnrankedMemRefTypeGet" (Typs.Type.t @-> uint @-> returning Typs.Type.t)
 
-/// Returns the memory spcae of the given Unranked MemRef type.
-MLIR_CAPI_EXPORTED unsigned mlirUnrankedMemrefGetMemorySpace(MlirType type);
 
-//===----------------------------------------------------------------------===//
-// Tuple type.
-//===----------------------------------------------------------------------===//
+    (* Same as "mlirUnrankedMemRefTypeGet" but returns a nullptr wrapping
+     * MlirType on illegal arguments, emitting appropriate diagnostics. *)
+    let unranked_get_checked =
+      foreign
+        "mlirUnrankedMemRefTypeGetChecked"
+        (Typs.Type.t @-> uint @-> Typs.Location.t @-> returning Typs.Type.t)
 
-/// Checks whether the given type is a tuple type.
-MLIR_CAPI_EXPORTED bool mlirTypeIsATuple(MlirType type);
 
-/** Creates a tuple type that consists of the given list of elemental types. The
- * type is owned by the context. */
-MLIR_CAPI_EXPORTED MlirType mlirTupleTypeGet(MlirContext ctx,
-                                             intptr_t numElements,
-                                             MlirType const *elements);
+    (* Returns the number of affine layout maps in the given MemRef type. *)
+    let num_affine_maps =
+      foreign "mlirMemRefTypeGetNumAffineMaps" (Typs.Type.t @-> returning intptr_t)
 
-/// Returns the number of types contained in a tuple.
-MLIR_CAPI_EXPORTED intptr_t mlirTupleTypeGetNumTypes(MlirType type);
 
-/// Returns the pos-th type in the tuple type.
-MLIR_CAPI_EXPORTED MlirType mlirTupleTypeGetType(MlirType type, intptr_t pos);
+    (* Returns the pos-th affine map of the given MemRef type. *)
+    let affine_map =
+      foreign
+        "mlirMemRefTypeGetAffineMap"
+        (Typs.Type.t @-> intptr_t @-> returning Typs.AffineMap.t)
 
-//===----------------------------------------------------------------------===//
-// Function type.
-//===----------------------------------------------------------------------===//
 
-/// Checks whether the given type is a function type.
-MLIR_CAPI_EXPORTED bool mlirTypeIsAFunction(MlirType type);
+    (* Returns the memory space of the given MemRef type. *)
+    let memory_space =
+      foreign "mlirMemRefTypeGetMemorySpace" (Typs.Type.t @-> returning uint)
 
-/// Creates a function type, mapping a list of input types to result types.
-MLIR_CAPI_EXPORTED MlirType mlirFunctionTypeGet(MlirContext ctx,
-                                                intptr_t numInputs,
-                                                MlirType const *inputs,
-                                                intptr_t numResults,
-                                                MlirType const *results);
 
-/// Returns the number of input types.
-MLIR_CAPI_EXPORTED intptr_t mlirFunctionTypeGetNumInputs(MlirType type);
+    (* Returns the memory spcae of the given Unranked MemRef type. *)
+    let unranked_memory_space =
+      foreign "mlirUnrankedMemRefGetMemorySpace" (Typs.Type.t @-> returning uint)
+  end
 
-/// Returns the number of result types.
-MLIR_CAPI_EXPORTED intptr_t mlirFunctionTypeGetNumResults(MlirType type);
+  (*===----------------------------------------------------------------------===
+   * Tuple type.
+   *===----------------------------------------------------------------------===*)
+  module Tuple = struct
+    (* Checks whether the given type is a tuple type. *)
+    let is_tuple = foreign "mlirTypeIsATuple" (Typs.Type.t @-> returning bool)
 
-/// Returns the pos-th input type.
-MLIR_CAPI_EXPORTED MlirType mlirFunctionTypeGetInput(MlirType type,
-                                                     intptr_t pos);
+    (* Creates a tuple type that consists of the given list of elemental types. The
+     * type is owned by the context. *)
+    let get =
+      foreign
+        "mlirTupleTypeGet"
+        (Typs.Context.t @-> intptr_t @-> ptr Typs.Type.t @-> returning Typs.Type.t)
 
-/// Returns the pos-th result type.
-MLIR_CAPI_EXPORTED MlirType mlirFunctionTypeGetResult(MlirType type,
-                                                      intptr_t pos);
 
-#ifdef __cplusplus
-}
-#endif
+    (* Returns the number of types contained in a tuple. *)
+    let num_types = foreign "mlirTupleTypeGetNumTypes" (Typs.Type.t @-> returning intptr_t)
 
-#endif // MLIR_C_STANDARDTYPES_H
+    (* Returns the pos-th type in the tuple type. *)
+    let get_type =
+      foreign "mlirTupleTypeGetType" (Typs.Type.t @-> intptr_t @-> returning Typs.Type.t)
+  end
+
+  (*===----------------------------------------------------------------------===
+   * Function type.
+   *===----------------------------------------------------------------------===*)
+
+  module Function = struct
+    (* Checks whether the given type is a function type. *)
+    let is_function = foreign "mlirTypeIsAFunction" (Typs.Type.t @-> returning bool)
+
+    (* Creates a function type, mapping a list of input types to result types. *)
+    let type_get =
+      foreign
+        "mlirFunctionTypeGet"
+        (Typs.Context.t
+        @-> intptr_t
+        @-> ptr Typs.Type.t
+        @-> intptr_t
+        @-> ptr Typs.Type.t
+        @-> returning Typs.Type.t)
+
+
+    (* Returns the number of input types. *)
+    let num_inputs =
+      foreign "mlirFunctionTypeGetNumInputs" (Typs.Type.t @-> returning intptr_t)
+
+
+    (* Returns the number of result types. *)
+    let num_results =
+      foreign "mlirFunctionTypeGetNumResults" (Typs.Type.t @-> returning intptr_t)
+
+
+    (* Returns the pos-th input type. *)
+    let input =
+      foreign
+        "mlirFunctionTypeGetInput"
+        (Typs.Type.t @-> intptr_t @-> returning Typs.Type.t)
+
+
+    (* Returns the pos-th result type. *)
+    let result =
+      foreign
+        "mlirFunctionTypeGetResult"
+        (Typs.Type.t @-> intptr_t @-> returning Typs.Type.t)
+  end
+end
