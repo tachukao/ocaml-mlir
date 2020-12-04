@@ -141,4 +141,30 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
       let () = seal t
     end
   end
+
+  module Pass = struct
+    module Pass = struct
+      type t
+
+      let t : t structure typ = structure "MlirPass"
+      let ptr = field t "ptr" (ptr void)
+      let () = seal t
+    end
+
+    module PassManager = struct
+      type t
+
+      let t : t structure typ = structure "MlirPassManager"
+      let ptr = field t "ptr" (ptr void)
+      let () = seal t
+    end
+
+    module OpPassManager = struct
+      type t
+
+      let t : t structure typ = structure "MlirOpPassManager"
+      let ptr = field t "ptr" (ptr void)
+      let () = seal t
+    end
+  end
 end

@@ -1,5 +1,4 @@
 (library
  (name types)
- (modules types)
  (public_name mlir.types)
  (libraries ctypes.stubs ctypes))
