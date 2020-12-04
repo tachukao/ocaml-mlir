@@ -173,4 +173,13 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
     let ptr = field t "ptr" (ptr void)
     let () = seal t
   end
+
+  (* AffineMap.h Types *)
+  module AffineMap = struct
+    type t
+
+    let t : t structure typ = structure "MlirAffineMap"
+    let ptr = field t "ptr" (ptr void)
+    let () = seal t
+  end
 end

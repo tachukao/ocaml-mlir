@@ -3,7 +3,7 @@ module Typs = Typs
 
 module Bindings (F : FOREIGN) = struct
   module AffineExpr = Affine_expr.Bindings (F)
-  include Affine_map.Bindings (F)
+  module AffineMap = Affine_map.Bindings (F)
   include Diagnostics.Bindings (F)
   include Ir.Bindings (F)
   include Pass.Bindings (F)
