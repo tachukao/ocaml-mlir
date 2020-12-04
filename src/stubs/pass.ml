@@ -22,9 +22,7 @@ module Bindings (F : FOREIGN) = struct
     let run =
       foreign
         "mlirPassManagerRun"
-        (Typs.PassManager.t
-        @-> Typs.Module.t
-        @-> returning Typs.LogicalResult.t)
+        (Typs.PassManager.t @-> Typs.Module.t @-> returning Typs.LogicalResult.t)
 
 
     (* Nest an OpPassManager under the top-level PassManager, the nested
@@ -35,9 +33,7 @@ module Bindings (F : FOREIGN) = struct
     let nested_under =
       foreign
         "mlirPassManagerGetNestedUnder"
-        (Typs.PassManager.t
-        @-> Typs.StringRef.t
-        @-> returning Typs.OpPassManager.t)
+        (Typs.PassManager.t @-> Typs.StringRef.t @-> returning Typs.OpPassManager.t)
 
 
     (* Add a pass and transfer ownership to the provided top-level mlirPassManager.
@@ -56,9 +52,7 @@ module Bindings (F : FOREIGN) = struct
     let nested_under =
       foreign
         "mlirOpPassManagerGetNestedUnder"
-        (Typs.OpPassManager.t
-        @-> Typs.StringRef.t
-        @-> returning Typs.OpPassManager.t)
+        (Typs.OpPassManager.t @-> Typs.StringRef.t @-> returning Typs.OpPassManager.t)
 
 
     (* Add a pass and transfer ownership to the provided mlirOpPassManager. If the
@@ -84,8 +78,6 @@ module Bindings (F : FOREIGN) = struct
     let parse_pass_pipeline =
       foreign
         "mlirParsePassPipeline"
-        (Typs.OpPassManager.t
-        @-> Typs.StringRef.t
-        @-> returning Typs.LogicalResult.t)
+        (Typs.OpPassManager.t @-> Typs.StringRef.t @-> returning Typs.LogicalResult.t)
   end
 end

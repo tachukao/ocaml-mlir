@@ -514,7 +514,10 @@ module Bindings (F : FOREIGN) = struct
       let string_get =
         foreign
           "mlirDenseElementsAttrStringGet"
-          (Typs.Type.t @-> intptr_t @-> (ptr Typs.StringRef.t) @-> returning Typs.Attribute.t)
+          (Typs.Type.t
+          @-> intptr_t
+          @-> ptr Typs.StringRef.t
+          @-> returning Typs.Attribute.t)
 
 
       (* Creates a dense elements attribute that has the same data as the given dense
