@@ -3,21 +3,19 @@ open Ctypes
 module Bindings (F : FOREIGN) = struct
   open F
 
-  (*
   (*===----------------------------------------------------------------------===
    * Integer types.
    *===----------------------------------------------------------------------===*)
 
   module Integer = struct
     (* Checks whether the given type is an integer type. *)
-    let is_integer = foreign "mlirTypeIsAInteger" (Typs.IR.Type.t @-> returning bool)
+    let is_integer = foreign "mlirTypeIsAInteger" (Typs.Type.t @-> returning bool)
 
     let type_get =
-      foreign
-        "mlirIntegerTypeGet"
-        (Typs.IR.Context.t @-> uint @-> returning Typs.IR.Type.t)
+      foreign "mlirIntegerTypeGet" (Typs.Context.t @-> uint @-> returning Typs.Type.t)
   end
 
+  (*
 (* Creates a signless integer type of the given bitwidth in the context. The
  * type is owned by the context. *)
 let integer_type_get MlirType mlirIntegerTypeGet(MlirContext ctx,

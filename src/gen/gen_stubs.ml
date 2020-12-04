@@ -15,7 +15,7 @@ let () =
       Format.fprintf fmt_c "#include \"mlir-c/Registration.h\"@.";
       Format.fprintf fmt_c "#include \"mlir-c/StandardAttributes.h\"@.";
       Format.fprintf fmt_c "#include \"mlir-c/StandardDialect.h\"@.";
-      Format.fprintf fmt_c "#include \"mlir-c/StandardAttributes.h\"@.";
+      Format.fprintf fmt_c "#include \"mlir-c/StandardTypes.h\"@.";
       Cstubs.write_c fmt_c ~prefix:"caml" (module Stubs.Bindings));
   with_file "mlir_generated.ml" ~f:(fun fmt_ml ->
       Cstubs.write_ml fmt_ml ~prefix:"caml" (module Stubs.Bindings));
