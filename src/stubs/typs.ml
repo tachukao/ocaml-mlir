@@ -1,7 +1,7 @@
 open Ctypes
 module T = Types.Bindings (Types_bindings_generated)
 
-let stringref_callback =
+let string_callback =
   Foreign.funptr (T.Support.StringRef.t @-> ptr void @-> returning void)
 
 

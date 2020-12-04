@@ -3,7 +3,10 @@ open Ctypes
 module Bindings (F : FOREIGN) = struct
   open F
 
-  (* Context *)
+  (*===----------------------------------------------------------------------===
+   * Context API.
+   *===----------------------------------------------------------------------===*)
+
   module Context = struct
     open Typs.IR.Context
 
@@ -34,7 +37,10 @@ module Bindings (F : FOREIGN) = struct
         (t @-> Typs.Support.StringRef.t @-> returning Typs.IR.Dialect.t)
   end
 
-  (* Dialect *)
+  (*===----------------------------------------------------------------------===
+   * Dialect API.
+   *===----------------------------------------------------------------------===*)
+
   module Dialect = struct
     open Typs.IR.Dialect
 
@@ -46,7 +52,10 @@ module Bindings (F : FOREIGN) = struct
       foreign "mlirDialectGetNamespace" (t @-> returning Typs.Support.StringRef.t)
   end
 
-  (* Location *)
+  (*===----------------------------------------------------------------------===
+   * Location API.
+   *===----------------------------------------------------------------------===*)
+
   module Location = struct
     open Typs.IR.Location
 
@@ -64,10 +73,13 @@ module Bindings (F : FOREIGN) = struct
     let print =
       foreign
         "mlirLocationPrint"
-        (t @-> Typs.stringref_callback @-> ptr void @-> returning void)
+        (t @-> Typs.string_callback @-> ptr void @-> returning void)
   end
 
-  (* Module *)
+  (*===----------------------------------------------------------------------===
+   * Module API.
+   *===----------------------------------------------------------------------===*)
+
   module Module = struct
     let empty =
       foreign "mlirModuleCreateEmpty" (Typs.IR.Location.t @-> returning Typs.IR.Module.t)
@@ -91,7 +103,10 @@ module Bindings (F : FOREIGN) = struct
       foreign "mlirModuleGetOperation" (Typs.IR.Module.t @-> returning Typs.IR.Operation.t)
   end
 
-  (* OperationState *)
+  (*===----------------------------------------------------------------------===
+   * OperationState API.
+   *===----------------------------------------------------------------------===*)
+
   module OperationState = struct
     open Typs.IR.OperationState
 
@@ -131,7 +146,10 @@ module Bindings (F : FOREIGN) = struct
         (ptr t @-> intptr_t @-> ptr Typs.IR.NamedAttribute.t @-> returning void)
   end
 
-  (* OpPrintingFlags *)
+  (*===----------------------------------------------------------------------===
+   * OpPrintFlags API.
+   *===----------------------------------------------------------------------===*)
+
   module OpPrintingFlags = struct
     open Typs.IR.OpPrintingFlags
 
@@ -158,7 +176,10 @@ module Bindings (F : FOREIGN) = struct
     let use_local_scope = foreign "mlirOpPrintingFlagsUseLocalScope" (t @-> returning void)
   end
 
-  (* Operation API *)
+  (*===----------------------------------------------------------------------===
+   * Operation API.
+   *===----------------------------------------------------------------------===*)
+
   module Operation = struct
     let create =
       foreign
@@ -273,7 +294,7 @@ module Bindings (F : FOREIGN) = struct
     let print =
       foreign
         "mlirOperationPrint"
-        (Typs.IR.Operation.t @-> Typs.stringref_callback @-> ptr void @-> returning void)
+        (Typs.IR.Operation.t @-> Typs.string_callback @-> ptr void @-> returning void)
 
 
     let print_with_flags =
@@ -281,7 +302,7 @@ module Bindings (F : FOREIGN) = struct
         "mlirOperationPrintWithFlags"
         (Typs.IR.Operation.t
         @-> Typs.IR.OpPrintingFlags.t
-        @-> Typs.stringref_callback
+        @-> Typs.string_callback
         @-> ptr void
         @-> returning void)
 
@@ -322,7 +343,10 @@ module Bindings (F : FOREIGN) = struct
         (Typs.IR.Region.t @-> Typs.IR.Block.t @-> Typs.IR.Block.t @-> returning void)
   end
 
-  (* Block API *)
+  (*===----------------------------------------------------------------------===
+   * Block API.
+   *===----------------------------------------------------------------------===*)
+
   module Block = struct
     let create =
       foreign
@@ -390,120 +414,169 @@ module Bindings (F : FOREIGN) = struct
     let print =
       foreign
         "mlirBlockPrint"
-        (Typs.IR.Block.t @-> Typs.stringref_callback @-> ptr void @-> returning void)
+        (Typs.IR.Block.t @-> Typs.string_callback @-> ptr void @-> returning void)
   end
 
-  (*
+  (*===----------------------------------------------------------------------===
+   * Value API.
+   *===----------------------------------------------------------------------===*)
+
+  module Value = struct
+    (* Returns whether the value is null. *)
+    let is_null = foreign "mlirValueIsNull" (Typs.IR.Value.t @-> returning bool)
+
+    (* Returns 1 if two values are equal, 0 otherwise. *)
+    (* mlirValueEqual does not seem to be exported *)
+    (* let equal =
+      foreign "mlirValueEqual" (Typs.IR.Value.t @-> Typs.IR.Value.t @-> returning bool) *)
+
+    (* Returns 1 if the value is a block argument, 0 otherwise. *)
+    let is_block_argument =
+      foreign "mlirValueIsABlockArgument" (Typs.IR.Value.t @-> returning bool)
 
 
-//===----------------------------------------------------------------------===//
-// Value API.
-//===----------------------------------------------------------------------===//
+    (* Returns 1 if the value is an operation result, 0 otherwise. *)
+    let is_op_result = foreign "mlirValueIsAOpResult" (Typs.IR.Value.t @-> returning bool)
 
-/// Returns whether the value is null.
-static inline bool mlirValueIsNull(MlirValue value) { return !value.ptr; }
+    (* Returns the block in which this value is defined as an argument. Asserts if
+     * the value is not a block argument. *)
+    let block_argument_get_owner =
+      foreign "mlirBlockArgumentGetOwner" (Typs.IR.Value.t @-> returning Typs.IR.Block.t)
 
-/// Returns 1 if two values are equal, 0 otherwise.
-bool mlirValueEqual(MlirValue value1, MlirValue value2);
 
-/// Returns 1 if the value is a block argument, 0 otherwise.
-MLIR_CAPI_EXPORTED bool mlirValueIsABlockArgument(MlirValue value);
+    (* Returns the position of the value in the argument list of its block. *)
+    let block_argument_arg_num =
+      foreign "mlirBlockArgumentGetArgNumber" (Typs.IR.Value.t @-> returning intptr_t)
 
-/// Returns 1 if the value is an operation result, 0 otherwise.
-MLIR_CAPI_EXPORTED bool mlirValueIsAOpResult(MlirValue value);
 
-/** Returns the block in which this value is defined as an argument. Asserts if
-   * the value is not a block argument. */
-MLIR_CAPI_EXPORTED MlirBlock mlirBlockArgumentGetOwner(MlirValue value);
+    (* Sets the type of the block argument to the given type. *)
+    let block_argument_set_type =
+      foreign
+        "mlirBlockArgumentSetType"
+        (Typs.IR.Value.t @-> Typs.IR.Type.t @-> returning void)
 
-/// Returns the position of the value in the argument list of its block.
-MLIR_CAPI_EXPORTED intptr_t mlirBlockArgumentGetArgNumber(MlirValue value);
 
-/// Sets the type of the block argument to the given type.
-MLIR_CAPI_EXPORTED void mlirBlockArgumentSetType(MlirValue value,
-                                                 MlirType type);
+    (* Returns an operation that produced this value as its result. Asserts if the
+     * value is not an op result. *)
+    let op_result_get_owner =
+      foreign "mlirOpResultGetOwner" (Typs.IR.Value.t @-> returning Typs.IR.Operation.t)
 
-/** Returns an operation that produced this value as its result. Asserts if the
-   * value is not an op result. */
-MLIR_CAPI_EXPORTED MlirOperation mlirOpResultGetOwner(MlirValue value);
 
-/** Returns the position of the value in the list of results of the operation
-   * that produced it. */
-MLIR_CAPI_EXPORTED intptr_t mlirOpResultGetResultNumber(MlirValue value);
+    (* Returns the position of the value in the list of results of the operation
+   * that produced it. *)
+    let op_result_get_result_num =
+      foreign "mlirOpResultGetResultNumber" (Typs.IR.Value.t @-> returning intptr_t)
 
-/// Returns the type of the value.
-MLIR_CAPI_EXPORTED MlirType mlirValueGetType(MlirValue value);
 
-/// Prints the value to the standard error stream.
-MLIR_CAPI_EXPORTED void mlirValueDump(MlirValue value);
+    (* Returns the type of the value. *)
+    let get_type =
+      foreign "mlirValueGetType" (Typs.IR.Value.t @-> returning Typs.IR.Type.t)
 
-/** Prints a value by sending chunks of the string representation and
+
+    (* Prints the value to the standard error stream. *)
+    let dump = foreign "mlirValueDump" (Typs.IR.Value.t @-> returning void)
+
+    (* Prints a value by sending chunks of the string representation and
    * forwarding `userData to `callback`. Note that the callback may be called
-   * several times with consecutive chunks of the string. */
-MLIR_CAPI_EXPORTED void
-mlirValuePrint(MlirValue value, MlirStringCallback callback, void *userData);
+   * several times with consecutive chunks of the string. *)
+    let print =
+      foreign
+        "mlirValuePrint"
+        (Typs.IR.Value.t @-> Typs.string_callback @-> ptr void @-> returning void)
+  end
 
-//===----------------------------------------------------------------------===//
-// Type API.
-//===----------------------------------------------------------------------===//
+  (*===----------------------------------------------------------------------===
+   * Type API.
+   *===----------------------------------------------------------------------===*)
 
-/// Parses a type. The type is owned by the context.
-MLIR_CAPI_EXPORTED MlirType mlirTypeParseGet(MlirContext context,
-                                             MlirStringRef type);
+  module Type = struct
+    (* Parses a type. The type is owned by the context. *)
+    let parse_get =
+      foreign
+        "mlirTypeParseGet"
+        (Typs.IR.Context.t @-> Typs.Support.StringRef.t @-> returning Typs.IR.Type.t)
 
-/// Gets the context that a type was created with.
-MLIR_CAPI_EXPORTED MlirContext mlirTypeGetContext(MlirType type);
 
-/// Checks whether a type is null.
-static inline bool mlirTypeIsNull(MlirType type) { return !type.ptr; }
+    (* Gets the context that a type was created with. *)
+    let context =
+      foreign "mlirTypeGetContext" (Typs.IR.Type.t @-> returning Typs.IR.Context.t)
 
-/// Checks if two types are equal.
-MLIR_CAPI_EXPORTED bool mlirTypeEqual(MlirType t1, MlirType t2);
 
-/** Prints a location by sending chunks of the string representation and
+    (* Checks whether a type is null. *)
+    let is_null = foreign "mlirTypeIsNull" (Typs.IR.Type.t @-> returning bool)
+
+    (* Checks if two types are equal. *)
+    let equal =
+      foreign "mlirTypeEqual" (Typs.IR.Type.t @-> Typs.IR.Type.t @-> returning bool)
+
+
+    (* Prints a location by sending chunks of the string representation and
    * forwarding `userData to `callback`. Note that the callback may be called
-   * several times with consecutive chunks of the string. */
-MLIR_CAPI_EXPORTED void
-mlirTypePrint(MlirType type, MlirStringCallback callback, void *userData);
+   * several times with consecutive chunks of the string. *)
+    let print =
+      foreign
+        "mlirTypePrint"
+        (Typs.IR.Type.t @-> Typs.string_callback @-> ptr void @-> returning void)
 
-/// Prints the type to the standard error stream.
-MLIR_CAPI_EXPORTED void mlirTypeDump(MlirType type);
 
-//===----------------------------------------------------------------------===//
-// Attribute API.
-//===----------------------------------------------------------------------===//
+    (* Prints the type to the standard error stream. *)
+    let dump = foreign "mlirTypeDump" (Typs.IR.Type.t @-> returning void)
+  end
 
-/// Parses an attribute. The attribute is owned by the context.
-MLIR_CAPI_EXPORTED MlirAttribute mlirAttributeParseGet(MlirContext context,
-                                                       MlirStringRef attr);
+  (*===----------------------------------------------------------------------===
+   * Attribute API.
+   *===----------------------------------------------------------------------===*)
 
-/// Gets the context that an attribute was created with.
-MLIR_CAPI_EXPORTED MlirContext mlirAttributeGetContext(MlirAttribute attribute);
+  module Attribute = struct
+    (* Parses an attribute. The attribute is owned by the context. *)
+    let parse_get =
+      foreign
+        "mlirAttributeParseGet"
+        (Typs.IR.Context.t @-> Typs.Support.StringRef.t @-> returning Typs.IR.Attribute.t)
 
-/// Gets the type of this attribute.
-MLIR_CAPI_EXPORTED MlirType mlirAttributeGetType(MlirAttribute attribute);
 
-/// Checks whether an attribute is null.
-static inline bool mlirAttributeIsNull(MlirAttribute attr) { return !attr.ptr; }
+    (* Gets the context that an attribute was created with. *)
+    let context =
+      foreign
+        "mlirAttributeGetContext"
+        (Typs.IR.Attribute.t @-> returning Typs.IR.Context.t)
 
-/// Checks if two attributes are equal.
-MLIR_CAPI_EXPORTED bool mlirAttributeEqual(MlirAttribute a1, MlirAttribute a2);
 
-/** Prints an attribute by sending chunks of the string representation and
+    (* Gets the type of this attribute. *)
+    let get_type =
+      foreign "mlirAttributeGetType" (Typs.IR.Attribute.t @-> returning Typs.IR.Type.t)
+
+
+    (* Checks whether an attribute is null. *)
+    let is_null = foreign "mlirAttributeIsNull" (Typs.IR.Attribute.t @-> returning bool)
+
+    (* Checks if two attributes are equal. *)
+    let equal =
+      foreign
+        "mlirAttributeEqual"
+        (Typs.IR.Attribute.t @-> Typs.IR.Attribute.t @-> returning bool)
+
+
+    (* Prints an attribute by sending chunks of the string representation and
    * forwarding `userData to `callback`. Note that the callback may be called
-   * several times with consecutive chunks of the string. */
-MLIR_CAPI_EXPORTED void mlirAttributePrint(MlirAttribute attr,
-                                           MlirStringCallback callback,
-                                           void *userData);
+   * several times with consecutive chunks of the string. *)
+    let print =
+      foreign
+        "mlirAttributePrint"
+        (Typs.IR.Attribute.t @-> Typs.string_callback @-> ptr void @-> returning void)
 
-/// Prints the attribute to the standard error stream.
-MLIR_CAPI_EXPORTED void mlirAttributeDump(MlirAttribute attr);
 
-/// Associates an attribute with the name. Takes ownership of neither.
-MLIR_CAPI_EXPORTED MlirNamedAttribute mlirNamedAttributeGet(MlirStringRef name,
-                                                            MlirAttribute attr);
+    (* Prints the attribute to the standard error stream. *)
+    let dump = foreign "mlirAttributeDump" (Typs.IR.Attribute.t @-> returning void)
 
-   *)
+    (* Associates an attribute with the name. Takes ownership of neither. *)
+    let get_named_attribute =
+      foreign
+        "mlirNamedAttributeGet"
+        (Typs.Support.StringRef.t
+        @-> Typs.IR.Attribute.t
+        @-> returning Typs.IR.NamedAttribute.t)
+  end
 
   (* Identifier API *)
   module Identifier = struct
