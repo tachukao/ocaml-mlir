@@ -19,189 +19,233 @@ module Bindings (F : FOREIGN) = struct
 
     (* Creates a signed integer type of the given bitwidth in the context. The type
      * is owned by the context. *)
-    let signed_get =
+    let signed =
       foreign
         "mlirIntegerTypeSignedGet"
         (Typs.Context.t @-> uint @-> returning Typs.Type.t)
+
+
+    (* Creates an unsigned integer type of the given bitwidth in the context. The
+     * type is owned by the context. *)
+    let unsigned =
+      foreign
+        "mlirIntegerTypeUnsignedGet"
+        (Typs.Context.t @-> uint @-> returning Typs.Type.t)
+
+
+    (* Returns the bitwidth of an integer type. *)
+    let width = foreign "mlirIntegerTypeGetWidth" (Typs.Type.t @-> returning uint)
+
+    (* Checks whether the given integer type is signless. *)
+    let is_signless = foreign "mlirIntegerTypeIsSignless" (Typs.Type.t @-> returning bool)
+
+    (* Checks whether the given integer type is signed. *)
+    let is_signed = foreign "mlirIntegerTypeIsSigned" (Typs.Type.t @-> returning bool)
+
+    (* Checks whether the given integer type is unsigned. *)
+    let is_unsigned = foreign "mlirIntegerTypeIsUnsigned" (Typs.Type.t @-> returning bool)
   end
 
-  (*
-/** Creates an unsigned integer type of the given bitwidth in the context. The
- * type is owned by the context. */
-MLIR_CAPI_EXPORTED MlirType mlirIntegerTypeUnsignedGet(MlirContext ctx,
-                                                       unsigned bitwidth);
+  (*===----------------------------------------------------------------------===
+   * Index type.
+   *===----------------------------------------------------------------------===*)
 
-/// Returns the bitwidth of an integer type.
-MLIR_CAPI_EXPORTED unsigned mlirIntegerTypeGetWidth(MlirType type);
+  module Index = struct
+    (* Checks whether the given type is an index type. *)
+    let is_index = foreign "mlirTypeIsAIndex" (Typs.Type.t @-> returning bool)
 
-/// Checks whether the given integer type is signless.
-MLIR_CAPI_EXPORTED bool mlirIntegerTypeIsSignless(MlirType type);
+    (* Creates an index type in the given context. The type is owned by the
+     * context. *)
+    let get = foreign "mlirIndexTypeGet" (Typs.Context.t @-> returning Typs.Type.t)
+  end
 
-/// Checks whether the given integer type is signed.
-MLIR_CAPI_EXPORTED bool mlirIntegerTypeIsSigned(MlirType type);
+  (*===----------------------------------------------------------------------===
+   * Floating-point types.
+   *===----------------------------------------------------------------------===*)
 
-/// Checks whether the given integer type is unsigned.
-MLIR_CAPI_EXPORTED bool mlirIntegerTypeIsUnsigned(MlirType type);
+  module Float = struct
+    (* Checks whether the given type is a bf16 type. *)
+    let is_bf16 = foreign "mlirTypeIsABF16" (Typs.Type.t @-> returning bool)
 
-//===----------------------------------------------------------------------===//
-// Index type.
-//===----------------------------------------------------------------------===//
+    (* Creates a bf16 type in the given context. The type is owned by the
+     * context. *)
+    let bf16 = foreign "mlirBF16TypeGet" (Typs.Context.t @-> returning Typs.Type.t)
 
-/// Checks whether the given type is an index type.
-MLIR_CAPI_EXPORTED bool mlirTypeIsAIndex(MlirType type);
+    (* Checks whether the given type is an f16 type. *)
+    let is_f16 = foreign "mlirTypeIsAF16" (Typs.Type.t @-> returning bool)
 
-/** Creates an index type in the given context. The type is owned by the
- * context. */
-MLIR_CAPI_EXPORTED MlirType mlirIndexTypeGet(MlirContext ctx);
+    (* Creates an f16 type in the given context. The type is owned by the
+     * context. *)
+    let f16 = foreign "mlirF16TypeGet" (Typs.Context.t @-> returning Typs.Type.t)
 
-//===----------------------------------------------------------------------===//
-// Floating-point types.
-//===----------------------------------------------------------------------===//
+    (* Checks whether the given type is an f32 type. *)
+    let is_f32 = foreign "mlirTypeIsAF32" (Typs.Type.t @-> returning bool)
 
-/// Checks whether the given type is a bf16 type.
-MLIR_CAPI_EXPORTED bool mlirTypeIsABF16(MlirType type);
+    (* Creates an f32 type in the given context. The type is owned by the
+     * context. *)
+    let f32 = foreign "mlirF32TypeGet" (Typs.Context.t @-> returning Typs.Type.t)
 
-/** Creates a bf16 type in the given context. The type is owned by the
- * context. */
-MLIR_CAPI_EXPORTED MlirType mlirBF16TypeGet(MlirContext ctx);
+    (* Checks whether the given type is an f64 type. *)
+    let is_f64 = foreign "mlirTypeIsAF64" (Typs.Type.t @-> returning bool)
 
-/// Checks whether the given type is an f16 type.
-MLIR_CAPI_EXPORTED bool mlirTypeIsAF16(MlirType type);
+    (* Creates a f64 type in the given context. The type is owned by the
+     * context. *)
+    let f64 = foreign "mlirF64TypeGet" (Typs.Context.t @-> returning Typs.Type.t)
+  end
 
-/** Creates an f16 type in the given context. The type is owned by the
- * context. */
-MLIR_CAPI_EXPORTED MlirType mlirF16TypeGet(MlirContext ctx);
+  (*===----------------------------------------------------------------------===
+   * None type.
+   *===----------------------------------------------------------------------===*)
+  module None = struct
+    (* Checks whether the given type is a None type. *)
+    let is_none = foreign "mlirTypeIsANone" (Typs.Type.t @-> returning bool)
 
-/// Checks whether the given type is an f32 type.
-MLIR_CAPI_EXPORTED bool mlirTypeIsAF32(MlirType type);
+    (* Creates a None type in the given context. The type is owned by the
+     * context. *)
+    let none = foreign "mlirNoneTypeGet" (Typs.Context.t @-> returning Typs.Type.t)
+  end
 
-/** Creates an f32 type in the given context. The type is owned by the
- * context. */
-MLIR_CAPI_EXPORTED MlirType mlirF32TypeGet(MlirContext ctx);
+  (*===----------------------------------------------------------------------===
+   * Complex type.
+   *===----------------------------------------------------------------------===*)
+  module Complex = struct
+    (* Checks whether the given type is a Complex type. *)
+    let is_complex = foreign "mlirTypeIsAComplex" (Typs.Type.t @-> returning bool)
 
-/// Checks whether the given type is an f64 type.
-MLIR_CAPI_EXPORTED bool mlirTypeIsAF64(MlirType type);
+    (* Creates a complex type with the given element type in the same context as
+     * the element type. The type is owned by the context. *)
+    let get = foreign "mlirComplexTypeGet" (Typs.Type.t @-> returning Typs.Type.t)
 
-/** Creates a f64 type in the given context. The type is owned by the
- * context. */
-MLIR_CAPI_EXPORTED MlirType mlirF64TypeGet(MlirContext ctx);
+    (* Returns the element type of the given complex type. *)
+    let element_type =
+      foreign "mlirComplexTypeGetElementType" (Typs.Type.t @-> returning Typs.Type.t)
+  end
 
-//===----------------------------------------------------------------------===//
-// None type.
-//===----------------------------------------------------------------------===//
+  (*===----------------------------------------------------------------------===
+   * Shaped type.
+   *===----------------------------------------------------------------------===*)
+  module Shaped = struct
+    (* Checks whether the given type is a Shaped type. *)
+    let is_shaped = foreign "mlirTypeIsAShaped" (Typs.Type.t @-> returning bool)
 
-/// Checks whether the given type is a None type.
-MLIR_CAPI_EXPORTED bool mlirTypeIsANone(MlirType type);
+    (* Returns the element type of the shaped type. *)
+    let get =
+      foreign "mlirShapedTypeGetElementType" (Typs.Type.t @-> returning Typs.Type.t)
 
-/** Creates a None type in the given context. The type is owned by the
- * context. */
-MLIR_CAPI_EXPORTED MlirType mlirNoneTypeGet(MlirContext ctx);
 
-//===----------------------------------------------------------------------===//
-// Complex type.
-//===----------------------------------------------------------------------===//
+    (* Checks whether the given shaped type is ranked. *)
+    let has_rank = foreign "mlirShapedTypeHasRank" (Typs.Type.t @-> returning bool)
 
-/// Checks whether the given type is a Complex type.
-MLIR_CAPI_EXPORTED bool mlirTypeIsAComplex(MlirType type);
+    (* Returns the rank of the given ranked shaped type. *)
+    let rank = foreign "mlirShapedTypeGetRank" (Typs.Type.t @-> returning int64_t)
 
-/** Creates a complex type with the given element type in the same context as
- * the element type. The type is owned by the context. */
-MLIR_CAPI_EXPORTED MlirType mlirComplexTypeGet(MlirType elementType);
+    (* Checks whether the given shaped type has a static shape. *)
+    let has_static_shape =
+      foreign "mlirShapedTypeHasStaticShape" (Typs.Type.t @-> returning bool)
 
-/// Returns the element type of the given complex type.
-MLIR_CAPI_EXPORTED MlirType mlirComplexTypeGetElementType(MlirType type);
 
-//===----------------------------------------------------------------------===//
-// Shaped type.
-//===----------------------------------------------------------------------===//
+    (* Checks wither the dim-th dimension of the given shaped type is dynamic. *)
+    let is_dynamic_dim =
+      foreign "mlirShapedTypeIsDynamicDim" (Typs.Type.t @-> intptr_t @-> returning bool)
 
-/// Checks whether the given type is a Shaped type.
-MLIR_CAPI_EXPORTED bool mlirTypeIsAShaped(MlirType type);
 
-/// Returns the element type of the shaped type.
-MLIR_CAPI_EXPORTED MlirType mlirShapedTypeGetElementType(MlirType type);
+    (* Returns the dim-th dimension of the given ranked shaped type. *)
+    let dim_size =
+      foreign "mlirShapedTypeGetDimSize" (Typs.Type.t @-> intptr_t @-> returning int64_t)
 
-/// Checks whether the given shaped type is ranked.
-MLIR_CAPI_EXPORTED bool mlirShapedTypeHasRank(MlirType type);
 
-/// Returns the rank of the given ranked shaped type.
-MLIR_CAPI_EXPORTED int64_t mlirShapedTypeGetRank(MlirType type);
+    (* Checks whether the given value is used as a placeholder for dynamic sizes
+     * in shaped types. *)
+    let is_dynamic_size =
+      foreign "mlirShapedTypeIsDynamicSize" (int64_t @-> returning bool)
 
-/// Checks whether the given shaped type has a static shape.
-MLIR_CAPI_EXPORTED bool mlirShapedTypeHasStaticShape(MlirType type);
 
-/// Checks wither the dim-th dimension of the given shaped type is dynamic.
-MLIR_CAPI_EXPORTED bool mlirShapedTypeIsDynamicDim(MlirType type, intptr_t dim);
+    (* Checks whether the given value is used as a placeholder for dynamic strides
+     * and offsets in shaped types. *)
+    let is_dynamic_stride_or_offset =
+      foreign "mlirShapedTypeIsDynamicStrideOrOffset" (int64_t @-> returning bool)
+  end
 
-/// Returns the dim-th dimension of the given ranked shaped type.
-MLIR_CAPI_EXPORTED int64_t mlirShapedTypeGetDimSize(MlirType type,
-                                                    intptr_t dim);
+  (*===----------------------------------------------------------------------===
+   * Vector type.
+   *===----------------------------------------------------------------------===*)
+  module Vector = struct
+    (* Checks whether the given type is a Vector type. *)
+    let is_vector = foreign "mlirTypeIsAVector" (Typs.Type.t @-> returning bool)
 
-/** Checks whether the given value is used as a placeholder for dynamic sizes
- * in shaped types. */
-MLIR_CAPI_EXPORTED bool mlirShapedTypeIsDynamicSize(int64_t size);
+    (* Creates a vector type of the shape identified by its rank and dimensions,
+     * with the given element type in the same context as the element type. The type
+     * is owned by the context. *)
+    let get =
+      foreign
+        "mlirVectorTypeGet"
+        (intptr_t @-> ptr int64_t @-> Typs.Type.t @-> returning Typs.Type.t)
 
-/** Checks whether the given value is used as a placeholder for dynamic strides
- * and offsets in shaped types. */
-MLIR_CAPI_EXPORTED bool mlirShapedTypeIsDynamicStrideOrOffset(int64_t val);
 
-//===----------------------------------------------------------------------===//
-// Vector type.
-//===----------------------------------------------------------------------===//
+    (* Same as "mlirVectorTypeGet" but returns a nullptr wrapping MlirType on
+     * illegal arguments, emitting appropriate diagnostics. *)
+    let get_checked =
+      foreign
+        "mlirVectorTypeGetChecked"
+        (intptr_t
+        @-> ptr int64_t
+        @-> Typs.Type.t
+        @-> Typs.Location.t
+        @-> returning Typs.Type.t)
+  end
 
-/// Checks whether the given type is a Vector type.
-MLIR_CAPI_EXPORTED bool mlirTypeIsAVector(MlirType type);
+  (*===----------------------------------------------------------------------===
+   * Ranked / Unranked Tensor type.
+   *===----------------------------------------------------------------------===*)
+  module Tensor = struct
+    (* Checks whether the given type is a Tensor type. *)
+    let is_tensor = foreign "mlirTypeIsATensor" (Typs.Type.t @-> returning bool)
 
-/** Creates a vector type of the shape identified by its rank and dimensions,
- * with the given element type in the same context as the element type. The type
- * is owned by the context. */
-MLIR_CAPI_EXPORTED MlirType mlirVectorTypeGet(intptr_t rank,
-                                              const int64_t *shape,
-                                              MlirType elementType);
+    (* Checks whether the given type is a ranked tensor type. *)
+    let is_ranked_tensor =
+      foreign "mlirTypeIsARankedTensor" (Typs.Type.t @-> returning bool)
 
-/** Same as "mlirVectorTypeGet" but returns a nullptr wrapping MlirType on
- * illegal arguments, emitting appropriate diagnostics. */
-MLIR_CAPI_EXPORTED MlirType mlirVectorTypeGetChecked(intptr_t rank,
-                                                     const int64_t *shape,
-                                                     MlirType elementType,
-                                                     MlirLocation loc);
 
-//===----------------------------------------------------------------------===//
-// Ranked / Unranked Tensor type.
-//===----------------------------------------------------------------------===//
+    (* Checks whether the given type is an unranked tensor type. *)
+    let is_unranked_tensor =
+      foreign "mlirTypeIsAUnrankedTensor" (Typs.Type.t @-> returning bool)
 
-/// Checks whether the given type is a Tensor type.
-MLIR_CAPI_EXPORTED bool mlirTypeIsATensor(MlirType type);
 
-/// Checks whether the given type is a ranked tensor type.
-MLIR_CAPI_EXPORTED bool mlirTypeIsARankedTensor(MlirType type);
+    (* Creates a tensor type of a fixed rank with the given shape and element type
+     * in the same context as the element type. The type is owned by the context. *)
+    let ranked =
+      foreign
+        "mlirRankedTensorTypeGet"
+        (intptr_t @-> ptr int64_t @-> Typs.Type.t @-> returning Typs.Type.t)
 
-/// Checks whether the given type is an unranked tensor type.
-MLIR_CAPI_EXPORTED bool mlirTypeIsAUnrankedTensor(MlirType type);
 
-/** Creates a tensor type of a fixed rank with the given shape and element type
- * in the same context as the element type. The type is owned by the context. */
-MLIR_CAPI_EXPORTED MlirType mlirRankedTensorTypeGet(intptr_t rank,
-                                                    const int64_t *shape,
-                                                    MlirType elementType);
+    (* Same as "mlirRankedTensorTypeGet" but returns a nullptr wrapping MlirType on
+     * illegal arguments, emitting appropriate diagnostics. *)
+    let ranked_checked =
+      foreign
+        "mlirRankedTensorTypeGetChecked"
+        (intptr_t
+        @-> ptr int64_t
+        @-> Typs.Type.t
+        @-> Typs.Location.t
+        @-> returning Typs.Type.t)
 
-/** Same as "mlirRankedTensorTypeGet" but returns a nullptr wrapping MlirType on
- * illegal arguments, emitting appropriate diagnostics. */
-MLIR_CAPI_EXPORTED MlirType mlirRankedTensorTypeGetChecked(intptr_t rank,
-                                                           const int64_t *shape,
-                                                           MlirType elementType,
-                                                           MlirLocation loc);
 
-/** Creates an unranked tensor type with the given element type in the same
- * context as the element type. The type is owned by the context. */
-MLIR_CAPI_EXPORTED MlirType mlirUnrankedTensorTypeGet(MlirType elementType);
+    (* Creates an unranked tensor type with the given element type in the same
+     * context as the element type. The type is owned by the context. *)
+    let unranked =
+      foreign "mlirUnrankedTensorTypeGet" (Typs.Type.t @-> returning Typs.Type.t)
 
-/** Same as "mlirUnrankedTensorTypeGet" but returns a nullptr wrapping MlirType
- * on illegal arguments, emitting appropriate diagnostics. */
-MLIR_CAPI_EXPORTED MlirType
-mlirUnrankedTensorTypeGetChecked(MlirType elementType, MlirLocation loc);
 
-   *)
+    (* Same as "mlirUnrankedTensorTypeGet" but returns a nullptr wrapping MlirType
+     * on illegal arguments, emitting appropriate diagnostics. *)
+
+    let unranked_checked =
+      foreign
+        "mlirUnrankedTensorTypeGetChecked"
+        (Typs.Type.t @-> Typs.Location.t @-> returning Typs.Type.t)
+  end
+
   (*===----------------------------------------------------------------------===
    * Ranked / Unranked MemRef type.
    *===----------------------------------------------------------------------===*)
@@ -234,7 +278,7 @@ mlirUnrankedTensorTypeGetChecked(MlirType elementType, MlirLocation loc);
      * type in the same context as the element type. The type has no affine maps,
      * i.e. represents a default row-major contiguous memref. The type is owned by
      * the context. *)
-    let contiguous_get =
+    let contiguous =
       foreign
         "mlirMemRefTypeContiguousGet"
         (Typs.Type.t @-> intptr_t @-> ptr int64_t @-> uint @-> returning Typs.Type.t)
@@ -242,7 +286,7 @@ mlirUnrankedTensorTypeGetChecked(MlirType elementType, MlirLocation loc);
 
     (* Same as "mlirMemRefTypeContiguousGet" but returns a nullptr wrapping
      * MlirType on illegal arguments, emitting appropriate diagnostics. *)
-    let contiguous_get_checked =
+    let contiguous_checked =
       foreign
         "mlirMemRefTypeContiguousGetChecked"
         (Typs.Type.t
@@ -255,13 +299,13 @@ mlirUnrankedTensorTypeGetChecked(MlirType elementType, MlirLocation loc);
 
     (* Creates an Unranked MemRef type with the given element type and in the given
      * memory space. The type is owned by the context of element type. *)
-    let unranked_get =
+    let unranked =
       foreign "mlirUnrankedMemRefTypeGet" (Typs.Type.t @-> uint @-> returning Typs.Type.t)
 
 
     (* Same as "mlirUnrankedMemRefTypeGet" but returns a nullptr wrapping
      * MlirType on illegal arguments, emitting appropriate diagnostics. *)
-    let unranked_get_checked =
+    let unranked_checked =
       foreign
         "mlirUnrankedMemRefTypeGetChecked"
         (Typs.Type.t @-> uint @-> Typs.Location.t @-> returning Typs.Type.t)
@@ -321,7 +365,7 @@ mlirUnrankedTensorTypeGetChecked(MlirType elementType, MlirLocation loc);
     let is_function = foreign "mlirTypeIsAFunction" (Typs.Type.t @-> returning bool)
 
     (* Creates a function type, mapping a list of input types to result types. *)
-    let type_get =
+    let get =
       foreign
         "mlirFunctionTypeGet"
         (Typs.Context.t
