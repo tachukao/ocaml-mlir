@@ -51,7 +51,7 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
       type t
 
       let t : t structure typ = structure "MlirOpPrintingFlags"
-      let () = seal t 
+      let () = seal t
     end
 
     module Block = struct
@@ -65,6 +65,7 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
       type t
 
       let t : t structure typ = structure "MlirRegion"
+      let () = seal t
     end
 
     module Attribute = struct
@@ -75,9 +76,13 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
       let () = seal t
     end
 
-    type identifier
+    module Identifier = struct
+      type t
 
-    let identifier : identifier structure typ = structure "MlirIdentifier"
+      let t : t structure typ = structure "MlirIdentifier"
+      let ptr = field t "ptr" (ptr void)
+      let () = seal t
+    end
 
     module Location = struct
       type t
@@ -105,6 +110,7 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
       type t
 
       let t : t structure typ = structure "MlirValue"
+      let () = seal t
     end
 
     module NamedAttribute = struct

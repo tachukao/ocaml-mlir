@@ -11,7 +11,7 @@
   (run %{discover})))
 
 (rule
- (targets types_bindings.ml)
+ (targets types_bindings_generated.ml)
  (deps ../gen/gen_types_c.exe)
  (action
   (with-stdout-to
