@@ -8,7 +8,7 @@ module Bindings (F : FOREIGN) = struct
   include Ir.Bindings (F)
   include Pass.Bindings (F)
   include Registration.Bindings (F)
-  include Standard_attributes.Bindings (F)
+  module StandardAttributes = Standard_attributes.Bindings (F)
   module StandardDialect = Standard_dialect.Bindings (F)
   include Standard_types.Bindings (F)
   include Support.Bindings (F)
