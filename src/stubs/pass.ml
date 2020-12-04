@@ -6,33 +6,25 @@ module Bindings (F : FOREIGN) = struct
   module PassManager = struct
     (* Create a new top-level PassManager. *)
     let create =
-      foreign
-        "mlirPassManagerCreate"
-        (Typs.IR.Context.t @-> returning Typs.Pass.PassManager.t)
+      foreign "mlirPassManagerCreate" (Typs.Context.t @-> returning Typs.PassManager.t)
 
 
     (* Destroy the provided PassManager. *)
-    let destroy =
-      foreign "mlirPassManagerDestroy" (Typs.Pass.PassManager.t @-> returning void)
-
+    let destroy = foreign "mlirPassManagerDestroy" (Typs.PassManager.t @-> returning void)
 
     (* Checks if a PassManager is null. *)
-    let is_null =
-      foreign "mlirPassManagerIsNull" (Typs.Pass.PassManager.t @-> returning bool)
-
+    let is_null = foreign "mlirPassManagerIsNull" (Typs.PassManager.t @-> returning bool)
 
     (* Cast a top-level PassManager to a generic OpPassManager. *)
-    let to_op_pass_manager =
-      Typs.Pass.PassManager.t @-> returning Typs.Pass.OpPassManager.t
-
+    let to_op_pass_manager = Typs.PassManager.t @-> returning Typs.OpPassManager.t
 
     (* Run the provided `passManager` on the given `module`. *)
     let run =
       foreign
         "mlirPassManagerRun"
-        (Typs.Pass.PassManager.t
-        @-> Typs.IR.Module.t
-        @-> returning Typs.Support.LogicalResult.t)
+        (Typs.PassManager.t
+        @-> Typs.Module.t
+        @-> returning Typs.LogicalResult.t)
 
 
     (* Nest an OpPassManager under the top-level PassManager, the nested
@@ -43,9 +35,9 @@ module Bindings (F : FOREIGN) = struct
     let nested_under =
       foreign
         "mlirPassManagerGetNestedUnder"
-        (Typs.Pass.PassManager.t
-        @-> Typs.Support.StringRef.t
-        @-> returning Typs.Pass.OpPassManager.t)
+        (Typs.PassManager.t
+        @-> Typs.StringRef.t
+        @-> returning Typs.OpPassManager.t)
 
 
     (* Add a pass and transfer ownership to the provided top-level mlirPassManager.
@@ -54,7 +46,7 @@ module Bindings (F : FOREIGN) = struct
     let add_owned_pass =
       foreign
         "mlirPassManagerAddOwnedPass"
-        (Typs.Pass.PassManager.t @-> Typs.Pass.Pass.t @-> returning void)
+        (Typs.PassManager.t @-> Typs.Pass.t @-> returning void)
   end
 
   module OpPassManager = struct
@@ -64,9 +56,9 @@ module Bindings (F : FOREIGN) = struct
     let nested_under =
       foreign
         "mlirOpPassManagerGetNestedUnder"
-        (Typs.Pass.OpPassManager.t
-        @-> Typs.Support.StringRef.t
-        @-> returning Typs.Pass.OpPassManager.t)
+        (Typs.OpPassManager.t
+        @-> Typs.StringRef.t
+        @-> returning Typs.OpPassManager.t)
 
 
     (* Add a pass and transfer ownership to the provided mlirOpPassManager. If the
@@ -76,7 +68,7 @@ module Bindings (F : FOREIGN) = struct
     let add_owned_pass =
       foreign
         "mlirOpPassManagerAddOwnedPass"
-        (Typs.Pass.OpPassManager.t @-> Typs.Pass.Pass.t @-> returning void)
+        (Typs.OpPassManager.t @-> Typs.Pass.t @-> returning void)
 
 
     (* Print a textual MLIR pass pipeline by sending chunks of the string
@@ -85,18 +77,15 @@ module Bindings (F : FOREIGN) = struct
     let print_pass_pipeline =
       foreign
         "mlirPrintPassPipeline"
-        (Typs.Pass.OpPassManager.t
-        @-> Typs.string_callback
-        @-> ptr void
-        @-> returning void)
+        (Typs.OpPassManager.t @-> Typs.string_callback @-> ptr void @-> returning void)
 
 
     (* Parse a textual MLIR pass pipeline and add it to the provided OpPassManager. *)
     let parse_pass_pipeline =
       foreign
         "mlirParsePassPipeline"
-        (Typs.Pass.OpPassManager.t
-        @-> Typs.Support.StringRef.t
-        @-> returning Typs.Support.LogicalResult.t)
+        (Typs.OpPassManager.t
+        @-> Typs.StringRef.t
+        @-> returning Typs.LogicalResult.t)
   end
 end

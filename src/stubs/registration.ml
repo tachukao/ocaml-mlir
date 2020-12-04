@@ -7,5 +7,5 @@ module Bindings (F : FOREIGN) = struct
    * This is needed before creating IR for these Dialects.
    *)
   let register_all_dialects =
-    foreign "mlirRegisterAllDialects" (Typs.IR.Context.t @-> returning void)
+    foreign "mlirRegisterAllDialects" (Typs.Context.t @-> returning void)
 end

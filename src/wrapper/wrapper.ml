@@ -1,15 +1,12 @@
 module Typs = Stubs.Typs
 module Bindings = Stubs.Bindings (Mlir_generated)
 
-module Support = struct
-  module StringRef = struct
-    type t = Typs.Support.StringRef.t
-  end
+module StringRef = struct
+  type t = Typs.StringRef.t
 end
 
-module IR = struct
-  module Context = struct
-    type t = Typs.IR.Context.t
-    let create () = Bindings.IR.Context.create  ()
-  end
+module Context = struct
+  type t = Typs.Context.t
+
+  let create () = Bindings.Context.create ()
 end
