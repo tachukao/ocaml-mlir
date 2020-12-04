@@ -1,0 +1,3 @@
+(executable
+ (name simple)
+ (libraries base stdio mlir.wrapper))

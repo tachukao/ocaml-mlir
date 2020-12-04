@@ -1,3 +1,7 @@
+(env
+  (dev
+    (flags (:standard -warn-error -A))))
+
 (library
  (name stubs)
  (public_name mlir.stubs)

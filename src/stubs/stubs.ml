@@ -1,7 +1,7 @@
 open Ctypes
+module Typs = Typs
 
 module Bindings (F : FOREIGN) = struct
-  open F
   module AffineExpr = Affine_expr.Bindings (F)
   module AffineMap = Affine_map.Bindings (F)
   module Diagonostics = Diagnostics.Bindings (F)

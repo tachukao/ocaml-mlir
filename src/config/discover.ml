@@ -18,7 +18,14 @@ let () =
         | _ -> failwith "llvm-config not found")
         |> String.strip
       in
-      let libs = [] in
+      let libs =
+        [ Printf.(sprintf "-L%s/../mlir/lib" llvm_src_root)
+        ; Printf.(sprintf "-L%s/lib" llvm_src_root)
+        ; Printf.(sprintf "-L%s/lib" llvm_build)
+        ; Printf.(sprintf "-L%s/tools/mlir/lib" llvm_build)
+        ; "-lMLIRPublicAPI"
+        ]
+      in
       let cflags =
         [ "-fPIC"
         ; "-Werror=date-time"
