@@ -1,3 +1,4 @@
+Transforms.capi.h.inc
 mlir-c
 *.annot
 *.cmo
