@@ -465,7 +465,7 @@ module Bindings (F : FOREIGN) = struct
 
   module Type = struct
     (* Parses a type. The type is owned by the context. *)
-    let parse_get =
+    let parse =
       foreign
         "mlirTypeParseGet"
         (Typs.Context.t @-> Typs.StringRef.t @-> returning Typs.Type.t)
