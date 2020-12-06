@@ -310,25 +310,25 @@ module Bindings (F : FOREIGN) = struct
       foreign "mlirRegionGetFirstBlock" (Typs.Region.t @-> returning Typs.Block.t)
 
 
-    let append_owned_block =
+    let append_block =
       foreign
         "mlirRegionAppendOwnedBlock"
         (Typs.Region.t @-> Typs.Block.t @-> returning void)
 
 
-    let insert_owned_block =
+    let insert_block =
       foreign
         "mlirRegionInsertOwnedBlock"
         (Typs.Region.t @-> intptr_t @-> Typs.Block.t @-> returning void)
 
 
-    let insert_owned_block_after =
+    let insert_block_after =
       foreign
         "mlirRegionInsertOwnedBlockAfter"
         (Typs.Region.t @-> Typs.Block.t @-> Typs.Block.t @-> returning void)
 
 
-    let insert_owned_block_before =
+    let insert_block_before =
       foreign
         "mlirRegionInsertOwnedBlockBefore"
         (Typs.Region.t @-> Typs.Block.t @-> Typs.Block.t @-> returning void)
@@ -358,25 +358,25 @@ module Bindings (F : FOREIGN) = struct
       foreign "mlirBlockGetTerminator" (Typs.Block.t @-> returning Typs.Operation.t)
 
 
-    let append_owned_operation =
+    let append_operation =
       foreign
         "mlirBlockAppendOwnedOperation"
         (Typs.Block.t @-> Typs.Operation.t @-> returning void)
 
 
-    let insert_owned_operation =
+    let insert_operation =
       foreign
         "mlirBlockInsertOwnedOperation"
         (Typs.Block.t @-> intptr_t @-> Typs.Operation.t @-> returning void)
 
 
-    let insert_owned_operation_after =
+    let insert_operation_after =
       foreign
         "mlirBlockInsertOwnedOperationAfter"
         (Typs.Block.t @-> Typs.Operation.t @-> Typs.Operation.t @-> returning void)
 
 
-    let insert_owned_operation_before =
+    let insert_operation_before =
       foreign
         "mlirBlockInsertOwnedOperationBefore"
         (Typs.Block.t @-> Typs.Operation.t @-> Typs.Operation.t @-> returning void)
@@ -499,7 +499,7 @@ module Bindings (F : FOREIGN) = struct
 
   module Attribute = struct
     (* Parses an attribute. The attribute is owned by the context. *)
-    let parse_get =
+    let parse =
       foreign
         "mlirAttributeParseGet"
         (Typs.Context.t @-> Typs.StringRef.t @-> returning Typs.Attribute.t)
@@ -538,7 +538,7 @@ module Bindings (F : FOREIGN) = struct
     let dump = foreign "mlirAttributeDump" (Typs.Attribute.t @-> returning void)
 
     (* Associates an attribute with the name. Takes ownership of neither. *)
-    let get_named_attribute =
+    let name =
       foreign
         "mlirNamedAttributeGet"
         (Typs.StringRef.t @-> Typs.Attribute.t @-> returning Typs.NamedAttribute.t)
