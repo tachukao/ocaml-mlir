@@ -182,4 +182,30 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
     let ptr = field t "ptr" (ptr void)
     let () = seal t
   end
+
+  (* Diagnostics.h Types *)
+  module Diagnostic = struct
+    type t
+
+    type severity =
+      | Error
+      | Warning
+      | Note
+      | Remark
+
+    let t : t structure typ = structure "MlirDiagnostic"
+    let ptr = field t "ptr" (ptr void)
+    let () = seal t
+    let error = S.constant "MlirDiagnosticError" S.int64_t
+    let warning = S.constant "MlirDiagnosticWarning" S.int64_t
+    let note = S.constant "MlirDiagnosticNote" S.int64_t
+    let remark = S.constant "MlirDiagnosticRemark" S.int64_t
+
+    let severity =
+      S.enum
+        "MlirDiagnosticSeverity"
+        ~typedef:true
+        [ Error, error; Warning, warning; Note, note; Remark, remark ]
+        ~unexpected:(fun _ -> failwith "unexpected Diagnostic enum")
+  end
 end
