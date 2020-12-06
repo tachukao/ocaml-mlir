@@ -41,7 +41,7 @@ end
 module Type : sig
   type t
 
-  (* Parses a type. The type is owned by the context. *)
+  (** Parses a type. The type is owned by the context. *)
   val parse : Context.t -> string -> t
 end
 
