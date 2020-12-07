@@ -63,7 +63,7 @@ module Bindings (F : FOREIGN) = struct
         (Typs.Context.t @-> Typs.StringRef.t @-> uint @-> uint @-> returning t)
 
 
-    let unknown_get = foreign "mlirLocationUnknownGet" (Typs.Context.t @-> returning t)
+    let unknown = foreign "mlirLocationUnknownGet" (Typs.Context.t @-> returning t)
     let context = foreign "mlirLocationGetContext" (t @-> returning Typs.Context.t)
     let is_null = foreign "mlirLocationIsNull" (t @-> returning bool)
     let equal = foreign "mlirLocationEqual" (t @-> t @-> returning bool)

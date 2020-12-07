@@ -99,17 +99,65 @@ let make_and_dump_add ctx loc =
 
 
 let construct_and_traverse_ir ctx =
-  let loc = Location.unknown_get ctx in
+  let loc = Location.unknown ctx in
   make_and_dump_add ctx loc
 
 
-let f ctx =
-  register_all_dialects ctx;
-  construct_and_traverse_ir ctx
+let build_with_insertions_and_print ctx =
+  let loc = Location.unknown ctx in
+  let owning_region = Region.create () in
+  let null_block = Region.first_block owning_region in
+  let state = OperationState.get "insertion.order.test" loc in
+  OperationState.add_owned_regions state [ owning_region ];
+  let op = Operation.create state in
+  let region = Operation.region op 0 in
+  (* use integer types of different bitwidth as block arguments in order to differentiate blocks *)
+  let i1 = BuiltinTypes.Integer.get ctx 1 in
+  let i2 = BuiltinTypes.Integer.get ctx 2 in
+  let i3 = BuiltinTypes.Integer.get ctx 3 in
+  let i4 = BuiltinTypes.Integer.get ctx 4 in
+  let block1 = Block.create [ i1 ] in
+  let block2 = Block.create [ i2 ] in
+  let block3 = Block.create [ i3 ] in
+  let block4 = Block.create [ i4 ] in
+  (* insert block as as to obtain the 1-2-3-4 order *)
+  Region.insert_owned_block_before region null_block block3;
+  Region.insert_owned_block_before region block3 block2;
+  Region.insert_owned_block_after region null_block block1;
+  Region.insert_owned_block_after region block3 block4;
+  let op1_state = OperationState.get "dummy.op1" loc in
+  let op2_state = OperationState.get "dummy.op2" loc in
+  let op3_state = OperationState.get "dummy.op3" loc in
+  let op4_state = OperationState.get "dummy.op4" loc in
+  let op5_state = OperationState.get "dummy.op5" loc in
+  let op6_state = OperationState.get "dummy.op6" loc in
+  let op7_state = OperationState.get "dummy.op7" loc in
+  let op1 = Operation.create op1_state in
+  let op2 = Operation.create op2_state in
+  let op3 = Operation.create op3_state in
+  let op4 = Operation.create op4_state in
+  let op5 = Operation.create op5_state in
+  let op6 = Operation.create op6_state in
+  let op7 = Operation.create op7_state in
+  (* insert operations in the first block so as to obtain the 1-2-3-4 order *)
+  let null_operation = Block.first_operation block1 in
+  assert (Operation.is_null null_operation);
+  Block.insert_owned_operation_before block1 null_operation op3;
+  Block.insert_owned_operation_before block1 op3 op2;
+  Block.insert_owned_operation_after block1 null_operation op1;
+  Block.insert_owned_operation_after block1 op3 op4;
+  (* append operations to the rest of blocks to make them non-empty and thus printable *)
+  Block.append_owned_operation block2 op5;
+  Block.append_owned_operation block3 op6;
+  Block.append_owned_operation block4 op7;
+  Operation.dump op;
+  Operation.destroy op
 
 
 let%expect_test _ =
-  with_context (fun ctx -> f ctx);
+  with_context (fun ctx ->
+      register_all_dialects ctx;
+      construct_and_traverse_ir ctx);
   [%expect
     {|
       module  {
@@ -126,4 +174,23 @@ let%expect_test _ =
           return
         }
       }
+    |}]
+
+let%expect_test _ =
+  with_context (fun ctx -> build_with_insertions_and_print ctx);
+  [%expect
+    {|
+    "insertion.order.test"() ( {
+    ^bb0(%arg0: i1):  // no predecessors
+      "dummy.op1"() : () -> ()
+      "dummy.op2"() : () -> ()
+      "dummy.op3"() : () -> ()
+      "dummy.op4"() : () -> ()
+    ^bb1(%0: i2):  // no predecessors
+      "dummy.op5"() : () -> ()
+    ^bb2(%1: i3):  // no predecessors
+      "dummy.op6"() : () -> ()
+    ^bb3(%2: i4):  // no predecessors
+      "dummy.op7"() : () -> ()
+    }) : () -> ()
     |}]

@@ -31,7 +31,7 @@ end
 module Location = struct
   type t = Typs.Location.t structured
 
-  let unknown_get = Bindings.Location.unknown_get
+  let unknown = Bindings.Location.unknown
 end
 
 module NamedAttribute = struct
@@ -95,6 +95,9 @@ module Operation = struct
     Bindings.Operation.create opstate
 
 
+  let destroy = Bindings.Operation.destroy
+  let is_null = Bindings.Operation.is_null
+  let region x pos = Bindings.Operation.region x Intptr.(of_int pos)
   let result x pos = Bindings.Operation.result x Intptr.(of_int pos)
   let dump = Bindings.Operation.dump
 end
@@ -119,11 +122,15 @@ module Block = struct
     Bindings.Block.argument x pos
 
 
+  let first_operation = Bindings.Block.first_operation
+
   let insert_owned_operation blk pos f =
     let pos = Intptr.of_int pos in
     Bindings.Block.insert_owned_operation blk pos f
 
 
+  let insert_owned_operation_before = Bindings.Block.insert_owned_operation_before
+  let insert_owned_operation_after = Bindings.Block.insert_owned_operation_after
   let append_owned_operation = Bindings.Block.append_owned_operation
 end
 
@@ -140,7 +147,16 @@ module Region = struct
 
   let create = Bindings.Region.create
   let destroy = Bindings.Region.destroy
+  let first_block = Bindings.Region.first_block
   let append_owned_block = Bindings.Region.append_owned_block
+  let insert_owned_block_before = Bindings.Region.insert_owned_block_before
+  let insert_owned_block_after = Bindings.Region.insert_owned_block_after
+end
+
+module BuiltinTypes = struct
+  module Integer = struct
+    let get ctx i = Bindings.BuiltinTypes.Integer.get ctx Unsigned.UInt.(of_int i)
+  end
 end
 
 let register_all_dialects = Bindings.register_all_dialects
@@ -149,18 +165,4 @@ let with_context f =
   let ctx = Context.create () in
   let result = f ctx in
   Context.destroy ctx;
-  result
-
-
-let with_region f =
-  let reg = Region.create () in
-  let result = f reg in
-  Region.destroy reg;
-  result
-
-
-let with_block typs f =
-  let blk = Block.create typs in
-  let result = f blk in
-  Block.destroy blk;
   result

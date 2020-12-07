@@ -33,18 +33,29 @@ and Region : sig
   (** Creates a new empty region and transfers ownership to the caller. *)
   val create : unit -> t
 
-  (* Takes a region owned by the caller and destroys it. *)
+  (** Takes a region owned by the caller and destroys it. *)
   val destroy : t -> unit
+
+  (** Gets the first block in the region. *)
+  val first_block : t -> Block.t
 
   (** Takes a block owned by the caller and appends it to the given region. *)
   val append_owned_block : t -> Block.t -> unit
+
+  (** Takes a block owned by the caller and inserts it at `pos` to the given region. This is an expensive operation that linearly scans the region, prefer insertAfter/Before instead. *)
+  val insert_owned_block_before : t -> Block.t -> Block.t -> unit
+
+  (** Takes a block owned by the caller and inserts it after the (non-owned)
+ * reference block in the given region. The reference block must belong to the
+ * region. If the reference block is null, prepends the block to the region. *)
+  val insert_owned_block_after : t -> Block.t -> Block.t -> unit
 end
 
 and Location : sig
   type t
 
   (** Creates a location with unknown position owned by the given context. *)
-  val unknown_get : Context.t -> t
+  val unknown : Context.t -> t
 end
 
 and NamedAttribute : sig
@@ -86,7 +97,16 @@ and Operation : sig
   (** Creates an operation and transfers ownership to the caller. *)
   val create : OperationState.t -> t
 
-  (* Returns `pos`-th result of the operation. *)
+  (** Takes an operation owned by the caller and destroys it. *)
+  val destroy : t -> unit
+
+  (** Checks whether the underlying operation is null. *)
+  val is_null : Operation.t -> bool
+
+  (** Returns `pos`-th region attached to the operation. *)
+  val region : t -> int -> Region.t
+
+  (** Returns `pos`-th result of the operation. *)
   val result : t -> int -> Value.t
 
   (** Prints an operation to stderr. *)
@@ -109,8 +129,17 @@ and Block : sig
   (** Returns `pos`-th argument of the block. *)
   val argument : t -> int -> Value.t
 
+  (** Returns the first operation in the block. *)
+  val first_operation : t -> Operation.t
+
   (** Takes an operation owned by the caller and inserts it as `pos` to the block. This is an expensive operation that scans the block linearly, prefer insertBefore/After instead. *)
   val insert_owned_operation : t -> int -> Operation.t -> unit
+
+  (** Takes an operation owned by the caller and inserts it before the (non-owned) reference operation in the given block. If the reference is null, appends the operation. Otherwise, the reference must belong to the block. *)
+  val insert_owned_operation_before : t -> Operation.t -> Operation.t -> unit
+
+  (** Takes an operation owned by the caller and inserts it after the (non-owned) reference operation in the given block. If the reference is null, prepends the operation. Otherwise, the reference must belong to the block. *)
+  val insert_owned_operation_after : t -> Operation.t -> Operation.t -> unit
 
   (** Takes an operation owned by the caller and appends it to the block. *)
   val append_owned_operation : t -> Operation.t -> unit
@@ -129,15 +158,16 @@ and Module : sig
   val operation : t -> Operation.t
 end
 
+and BuiltinTypes : sig
+  module Integer : sig
+    (** Creates a signless integer type of the given bitwidth in the context. The type is owned by the context. *)
+    val get : Context.t -> int -> Type.t
+  end
+end
+
 (** Registers all dialects known to core MLIR with the provided Context.
    This is needed before creating IR for these Dialects. *)
 val register_all_dialects : Context.t -> unit
 
 (* [with_context f]  creates a context [ctx], applies [f] to it, destroys it and returns the result of applying [f] *)
 val with_context : (Context.t -> 'a) -> 'a
-
-(* [with_region f]  creates a region [reg], applies [f] to it, destroys it and returns the result of applying [f] *)
-val with_region : (Region.t -> 'a) -> 'a
-
-(* [with_block typs f]  creates a block [blk] with types [typs], applies [f] to it, destroys it and returns the result of applying [f] *)
-val with_block : Type.t list -> (Block.t -> 'a) -> 'a
