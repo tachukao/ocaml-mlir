@@ -25,6 +25,9 @@ and Type : sig
 
   (** Parses a type. The type is owned by the context. *)
   val parse : Context.t -> string -> t
+
+  (** Prints the type to the standard error stream. *)
+  val dump : t -> unit
 end
 
 and Region : sig
@@ -160,8 +163,55 @@ end
 
 and BuiltinTypes : sig
   module Integer : sig
+    (** Checks whether the given type is an integer type. *)
+    val is_integer : Type.t -> bool
+
     (** Creates a signless integer type of the given bitwidth in the context. The type is owned by the context. *)
     val get : Context.t -> int -> Type.t
+
+    (** Creates a signed integer type of the given bitwidth in the context. The type is owned by the context. *)
+    val signed : Context.t -> int -> Type.t
+
+    (** Creates an unsigned integer type of the given bitwidth in the context. The type is owned by the context. *)
+    val unsigned : Context.t -> int -> Type.t
+
+    (** Returns the bitwidth of an integer type. *)
+    val width : Type.t -> int
+
+    (** Checks whether the given integer type is signless. *)
+    val is_signless : Type.t -> bool
+
+    (** Checks whether the given integer type is signed. *)
+    val is_signed : Type.t -> bool
+
+    (** Checks whether the given integer type is unsigned. *)
+    val is_unsigned : Type.t -> bool
+  end
+
+  module Float : sig
+    (** Checks whether the given type is a bf16 type. *)
+    val is_bf16 : Type.t -> bool
+
+    (** Creates a bf16 type in the given context. The type is owned by the context. *)
+    val bf16 : Context.t -> Type.t
+
+    (** Checks whether the given type is an f16 type. *)
+    val is_f16 : Type.t -> bool
+
+    (** Creates an f16 type in the given context. The type is owned by the context. *)
+    val f16 : Context.t -> Type.t
+
+    (** Checks whether the given type is an f32 type. *)
+    val is_f32 : Type.t -> bool
+
+    (** Creates an f32 type in the given context. The type is owned by the context. *)
+    val f32 : Context.t -> Type.t
+
+    (** Checks whether the given type is an f64 type. *)
+    val is_f64 : Type.t -> bool
+
+    (** Creates a f64 type in the given context. The type is owned by the context. *)
+    val f64 : Context.t -> Type.t
   end
 end
 
