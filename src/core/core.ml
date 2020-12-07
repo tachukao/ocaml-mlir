@@ -152,6 +152,27 @@ module BuiltinTypes = struct
   module Index = Bindings.BuiltinTypes.Index
   module None = Bindings.BuiltinTypes.None
   module Complex = Bindings.BuiltinTypes.Complex
+
+  module Vector = struct
+    include Bindings.BuiltinTypes.Vector
+
+    let get shp typ =
+      let n = Array.length shp in
+      let shp =
+        let shp = shp |> Array.map Int64.of_int |> Array.to_list in
+        CArray.(start (of_list int64_t shp))
+      in
+      get Intptr.(of_int n) shp typ
+
+
+    let get_checked shp typ loc =
+      let n = Array.length shp in
+      let shp =
+        let shp = shp |> Array.map Int64.of_int |> Array.to_list in
+        CArray.(start (of_list int64_t shp))
+      in
+      get_checked Intptr.(of_int n) shp typ loc
+  end
 end
 
 let register_all_dialects = Bindings.register_all_dialects

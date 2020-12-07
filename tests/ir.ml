@@ -196,6 +196,13 @@ let print_builtin_types ctx =
   (* Complex type *)
   let cplx = BuiltinTypes.Complex.get f32 in
   Type.dump cplx;
+  Printf.printf "\n%!";
+  (* Vector (and Shaped) type. ShapedType is a common base class for vectors,
+  memrefs and tensors, one cannot create instances of this class so it is
+  tested on an instance of vector type. *)
+  let shape = [| 2; 3 |] in
+  let vector = BuiltinTypes.Vector.get shape f32 in
+  Type.dump vector;
   Printf.printf "\n%!"
 
 
@@ -242,7 +249,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   with_context print_builtin_types;
-  [%expect {|
+  [%expect
+    {|
   @types
   i32
   si32
@@ -254,4 +262,5 @@ let%expect_test _ =
   f64
   none
   complex<f32>
+  vector<2x3xf32>
   |}]

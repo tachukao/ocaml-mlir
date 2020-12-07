@@ -244,6 +244,17 @@ module BuiltinTypes : sig
     (** Returns the element type of the given complex type. *)
     val element_type : Type.t -> Type.t
   end
+
+  module Vector : sig
+    (** Checks whether the given type is a Vector type. *)
+    val is_vector : Type.t -> bool
+
+    (** Creates a vector type of the shape identified by its rank and dimensions, with the given element type in the same context as the element type. The type is owned by the context. *)
+    val get : int array -> Type.t -> Type.t
+
+    (** Same as "mlirVectorTypeGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
+    val get_checked : int array -> Type.t -> Location.t -> Type.t
+  end
 end
 
 (** Registers all dialects known to core MLIR with the provided Context.
