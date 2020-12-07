@@ -126,7 +126,7 @@ module Bindings (F : FOREIGN) = struct
         (ptr t @-> intptr_t @-> ptr Typs.Value.t @-> returning void)
 
 
-    let add_regions =
+    let add_owned_regions =
       foreign
         "mlirOperationStateAddOwnedRegions"
         (ptr t @-> intptr_t @-> ptr Typs.Region.t @-> returning void)
@@ -310,25 +310,25 @@ module Bindings (F : FOREIGN) = struct
       foreign "mlirRegionGetFirstBlock" (Typs.Region.t @-> returning Typs.Block.t)
 
 
-    let append_block =
+    let append_owned_block =
       foreign
         "mlirRegionAppendOwnedBlock"
         (Typs.Region.t @-> Typs.Block.t @-> returning void)
 
 
-    let insert_block =
+    let insert_owned_block =
       foreign
         "mlirRegionInsertOwnedBlock"
         (Typs.Region.t @-> intptr_t @-> Typs.Block.t @-> returning void)
 
 
-    let insert_block_after =
+    let insert_owned_block_after =
       foreign
         "mlirRegionInsertOwnedBlockAfter"
         (Typs.Region.t @-> Typs.Block.t @-> Typs.Block.t @-> returning void)
 
 
-    let insert_block_before =
+    let insert_owned_block_before =
       foreign
         "mlirRegionInsertOwnedBlockBefore"
         (Typs.Region.t @-> Typs.Block.t @-> Typs.Block.t @-> returning void)
@@ -358,25 +358,25 @@ module Bindings (F : FOREIGN) = struct
       foreign "mlirBlockGetTerminator" (Typs.Block.t @-> returning Typs.Operation.t)
 
 
-    let append_operation =
+    let append_owned_operation =
       foreign
         "mlirBlockAppendOwnedOperation"
         (Typs.Block.t @-> Typs.Operation.t @-> returning void)
 
 
-    let insert_operation =
+    let insert_owned_operation =
       foreign
         "mlirBlockInsertOwnedOperation"
         (Typs.Block.t @-> intptr_t @-> Typs.Operation.t @-> returning void)
 
 
-    let insert_operation_after =
+    let insert_owned_operation_after =
       foreign
         "mlirBlockInsertOwnedOperationAfter"
         (Typs.Block.t @-> Typs.Operation.t @-> Typs.Operation.t @-> returning void)
 
 
-    let insert_operation_before =
+    let insert_owned_operation_before =
       foreign
         "mlirBlockInsertOwnedOperationBefore"
         (Typs.Block.t @-> Typs.Operation.t @-> Typs.Operation.t @-> returning void)

@@ -73,11 +73,11 @@ module OperationState = struct
     Bindings.OperationState.add_attributes opstate n attrs
 
 
-  let add_regions opstate regions =
+  let add_owned_regions opstate regions =
     let opstate = addr opstate in
     let n = List.length regions |> Intptr.of_int in
     let regions = CArray.(start (of_list Typs.Region.t regions)) in
-    Bindings.OperationState.add_regions opstate n regions
+    Bindings.OperationState.add_owned_regions opstate n regions
 
 
   let add_operands opstate operands =
@@ -119,12 +119,12 @@ module Block = struct
     Bindings.Block.argument x pos
 
 
-  let insert_operation blk pos f =
+  let insert_owned_operation blk pos f =
     let pos = Intptr.of_int pos in
-    Bindings.Block.insert_operation blk pos f
+    Bindings.Block.insert_owned_operation blk pos f
 
 
-  let append_operation = Bindings.Block.append_operation
+  let append_owned_operation = Bindings.Block.append_owned_operation
 end
 
 module Module = struct
@@ -140,7 +140,7 @@ module Region = struct
 
   let create = Bindings.Region.create
   let destroy = Bindings.Region.destroy
-  let append_block = Bindings.Region.append_block
+  let append_owned_block = Bindings.Region.append_owned_block
 end
 
 let register_all_dialects = Bindings.register_all_dialects

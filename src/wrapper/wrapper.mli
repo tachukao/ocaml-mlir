@@ -37,7 +37,7 @@ and Region : sig
   val destroy : t -> unit
 
   (** Takes a block owned by the caller and appends it to the given region. *)
-  val append_block : t -> Block.t -> unit
+  val append_owned_block : t -> Block.t -> unit
 end
 
 and Location : sig
@@ -74,7 +74,7 @@ and OperationState : sig
   val add_named_attributes : t -> NamedAttribute.t list -> unit
 
   (** Adds a list of regions to the operation state. *)
-  val add_regions : t -> Region.t list -> unit
+  val add_owned_regions : t -> Region.t list -> unit
 
   (** Adds a list of operands to the operation state. *)
   val add_operands : t -> Value.t list -> unit
@@ -110,10 +110,10 @@ and Block : sig
   val argument : t -> int -> Value.t
 
   (** Takes an operation owned by the caller and inserts it as `pos` to the block. This is an expensive operation that scans the block linearly, prefer insertBefore/After instead. *)
-  val insert_operation : t -> int -> Operation.t -> unit
+  val insert_owned_operation : t -> int -> Operation.t -> unit
 
   (** Takes an operation owned by the caller and appends it to the block. *)
-  val append_operation : t -> Operation.t -> unit
+  val append_owned_operation : t -> Operation.t -> unit
 end
 
 and Module : sig
