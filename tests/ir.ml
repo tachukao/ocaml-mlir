@@ -203,6 +203,53 @@ let print_builtin_types ctx =
   let shape = [| 2; 3 |] in
   let vector = BuiltinTypes.Vector.get shape f32 in
   Type.dump vector;
+  Printf.printf "\n%!";
+  (* Ranked tensor type *)
+  let ranked_tensor = BuiltinTypes.Tensor.ranked shape f32 in
+  assert (BuiltinTypes.Tensor.is_tensor ranked_tensor);
+  assert (BuiltinTypes.Tensor.is_ranked_tensor ranked_tensor);
+  assert (not (BuiltinTypes.Tensor.is_unranked_tensor ranked_tensor));
+  Type.dump ranked_tensor;
+  Printf.printf "\n%!";
+  (* Unranked tensor type *)
+  let unranked_tensor = BuiltinTypes.Tensor.unranked f32 in
+  assert (BuiltinTypes.Tensor.is_tensor unranked_tensor);
+  assert (not (BuiltinTypes.Tensor.is_ranked_tensor unranked_tensor));
+  assert (BuiltinTypes.Tensor.is_unranked_tensor unranked_tensor);
+  Type.dump unranked_tensor;
+  Printf.printf "\n%!";
+  (* MemRef type *)
+  let memref = BuiltinTypes.MemRef.contiguous f32 shape 2 in
+  Type.dump memref;
+  Printf.printf "\n%!";
+  (* Unranked MemRef type *)
+  let unranked_memref = BuiltinTypes.MemRef.unranked f32 4 in
+  Type.dump unranked_memref;
+  Printf.printf "\n%!";
+  (* Tuple Type *)
+  let types = [ unranked_memref; f32 ] in
+  let tuple = BuiltinTypes.Tuple.get ctx types in
+  assert (BuiltinTypes.Tuple.(is_tuple tuple));
+  assert (BuiltinTypes.Tuple.(num_types tuple = 2));
+  assert (Type.(equal BuiltinTypes.Tuple.(nth tuple 0) unranked_memref));
+  assert (Type.(equal BuiltinTypes.Tuple.(nth tuple 1) f32));
+  Type.dump tuple;
+  Printf.printf "\n%!";
+  let func_inputs = [ BuiltinTypes.Index.get ctx; BuiltinTypes.Integer.get ctx 1 ] in
+  let func_results =
+    [ BuiltinTypes.Integer.get ctx 16
+    ; BuiltinTypes.Integer.get ctx 32
+    ; BuiltinTypes.Integer.get ctx 64
+    ]
+  in
+  let func_type =
+    BuiltinTypes.Function.get ~inputs:func_inputs ~results:func_results ctx
+  in
+  assert (BuiltinTypes.Function.num_inputs func_type = 2);
+  assert (BuiltinTypes.Function.num_results func_type = 3);
+  assert (Type.equal BuiltinTypes.Function.(result func_type 0) List.(nth func_results 0));
+  assert (Type.equal BuiltinTypes.Function.(input func_type 1) List.(nth func_inputs 1));
+  Type.dump func_type;
   Printf.printf "\n%!"
 
 
@@ -263,4 +310,10 @@ let%expect_test _ =
   none
   complex<f32>
   vector<2x3xf32>
+  tensor<2x3xf32>
+  tensor<*xf32>
+  memref<2x3xf32, 2>
+  memref<*xf32, 4>
+  tuple<memref<*xf32, 4>, f32>
+  (index, i1) -> (i16, i32, i64)
   |}]

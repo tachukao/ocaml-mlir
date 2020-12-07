@@ -24,6 +24,9 @@ module IR : sig
   and Type : sig
     type t
 
+    (** Checks if two types are equal. *)
+    val equal : t -> t -> bool
+
     (** Parses a type. The type is owned by the context. *)
     val parse : Context.t -> string -> t
 
@@ -163,7 +166,7 @@ module IR : sig
   end
 end
 
-module BuiltinTypes : sig
+module rec BuiltinTypes : sig
   open IR
 
   module Integer : sig
@@ -255,6 +258,102 @@ module BuiltinTypes : sig
     (** Same as "mlirVectorTypeGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
     val get_checked : int array -> Type.t -> Location.t -> Type.t
   end
+
+  module Tensor : sig
+    (** Checks whether the given type is a Tensor type. *)
+    val is_tensor : Type.t -> bool
+
+    (** Checks whether the given type is a ranked tensor type. *)
+    val is_ranked_tensor : Type.t -> bool
+
+    (** Checks whether the given type is an unranked tensor type. *)
+    val is_unranked_tensor : Type.t -> bool
+
+    (** Creates a tensor type of a fixed rank with the given shape and element type in the same context as the element type. The type is owned by the context. *)
+    val ranked : int array -> Type.t -> Type.t
+
+    (** Same as "mlirRankedTensorTypeGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
+    val ranked_checked : int array -> Type.t -> Location.t -> Type.t
+
+    (** Creates an unranked tensor type with the given element type in the same context as the element type. The type is owned by the context. *)
+    val unranked : Type.t -> Type.t
+
+    (* Same as "mlirUnrankedTensorTypeGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
+    val unranked_checked : Type.t -> Location.t -> Type.t
+  end
+
+  module MemRef : sig
+    (** Checks whether the given type is a MemRef type. *)
+    val is_memref : Type.t -> bool
+
+    (** Checks whether the given type is an UnrankedMemRef type. *)
+    val is_unranked_memref : Type.t -> bool
+
+    (** Creates a MemRef type with the given rank and shape, a potentially empty list of affine layout maps, the given memory space and element type, in the same context as element type. The type is owned by the context. *)
+    val get : Type.t -> int array -> AffineMap.t list -> int -> Type.t
+
+    (** Creates a MemRef type with the given rank, shape, memory space and element type in the same context as the element type. The type has no affine maps, i.e. represents a default row-major contiguous memref. The type is owned by the context. *)
+    val contiguous : Type.t -> int array -> int -> Type.t
+
+    (** Same as "mlirMemRefTypeContiguousGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
+    val contiguous_checked : Type.t -> int array -> int -> Location.t -> Type.t
+
+    (** Creates an Unranked MemRef type with the given element type and in the given memory space. The type is owned by the context of element type. *)
+    val unranked : Type.t -> int -> Type.t
+
+    (** Same as "mlirUnrankedMemRefTypeGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
+    val unranked_checked : Type.t -> int -> Location.t -> Type.t
+
+    (** Returns the number of affine layout maps in the given MemRef type. *)
+    val num_affine_maps : Type.t -> int
+
+    (** Returns the pos-th affine map of the given MemRef type. *)
+    val affine_map : Type.t -> int -> AffineMap.t
+
+    (** Returns the memory space of the given MemRef type. *)
+    val memory_space : Type.t -> int
+
+    (** Returns the memory spcae of the given Unranked MemRef type. *)
+    val unranked_memory_space : Type.t -> int
+  end
+
+  module Tuple : sig
+    (** Checks whether the given type is a tuple type. *)
+    val is_tuple : Type.t -> bool
+
+    (** Creates a tuple type that consists of the given list of elemental types. The type is owned by the context. *)
+    val get : Context.t -> Type.t list -> Type.t
+
+    (** Returns the number of types contained in a tuple. *)
+    val num_types : Type.t -> int
+
+    (** Returns the pos-th type in the tuple type. *)
+    val nth : Type.t -> int -> Type.t
+  end
+
+  module Function : sig
+    (** Checks whether the given type is a function type. *)
+    val is_function : Type.t -> bool
+
+    (** Creates a function type, mapping a list of input types to result types. *)
+    val get : inputs:Type.t list -> results:Type.t list -> Context.t -> Type.t
+
+    (* Returns the number of input types. *)
+    val num_inputs : Type.t -> int
+
+    (* Returns the number of result types. *)
+    val num_results : Type.t -> int
+
+    (* Returns the pos-th input type. *)
+    val input : Type.t -> int -> Type.t
+
+    (* Returns the pos-th result type. *)
+    val result : Type.t -> int -> Type.t
+  end
+end
+
+and AffineMap : sig
+  type t
 end
 
 (** Registers all dialects known to core MLIR with the provided Context.

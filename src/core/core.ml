@@ -1,6 +1,8 @@
 open Ctypes
 open Wrapper
 
+type 'a structured = ('a, [ `Struct ]) Ctypes_static.structured
+
 module IR = struct
   module Context = struct
     type t = Typs.Context.t structured
@@ -173,6 +175,101 @@ module BuiltinTypes = struct
       in
       get_checked Intptr.(of_int n) shp typ loc
   end
+
+  module Tensor = struct
+    include Bindings.BuiltinTypes.Tensor
+
+    let ranked shp typ =
+      let n = Array.length shp in
+      let shp =
+        let shp = shp |> Array.map Int64.of_int |> Array.to_list in
+        CArray.(start (of_list int64_t shp))
+      in
+      ranked Intptr.(of_int n) shp typ
+
+
+    let ranked_checked shp typ loc =
+      let n = Array.length shp in
+      let shp =
+        let shp = shp |> Array.map Int64.of_int |> Array.to_list in
+        CArray.(start (of_list int64_t shp))
+      in
+      ranked_checked Intptr.(of_int n) shp typ loc
+  end
+
+  module MemRef = struct
+    include Bindings.BuiltinTypes.MemRef
+
+    let get typ shape affmaps memspace =
+      let rank = Array.length shape |> Intptr.of_int in
+      let shape =
+        let shp = shape |> Array.map Int64.of_int |> Array.to_list in
+        CArray.(start (of_list int64_t shp))
+      in
+      let n = List.length affmaps |> Intptr.of_int in
+      let affmaps = CArray.(start (of_list Typs.AffineMap.t affmaps)) in
+      get typ rank shape n affmaps Unsigned.UInt.(of_int memspace)
+
+
+    let contiguous typ shape memspace =
+      let rank = Array.length shape |> Intptr.of_int in
+      let shape =
+        let shp = shape |> Array.map Int64.of_int |> Array.to_list in
+        CArray.(start (of_list int64_t shp))
+      in
+      contiguous typ rank shape Unsigned.UInt.(of_int memspace)
+
+
+    let contiguous_checked typ shape memspace loc =
+      let rank = Array.length shape |> Intptr.of_int in
+      let shape =
+        let shp = shape |> Array.map Int64.of_int |> Array.to_list in
+        CArray.(start (of_list int64_t shp))
+      in
+      contiguous_checked typ rank shape Unsigned.UInt.(of_int memspace) loc
+
+
+    let unranked typ i = unranked typ Unsigned.UInt.(of_int i)
+    let unranked_checked typ i loc = unranked_checked typ Unsigned.UInt.(of_int i) loc
+    let num_affine_maps typ = num_affine_maps typ |> Intptr.to_int
+    let affine_map typ i = affine_map typ Intptr.(of_int i)
+    let memory_space typ = memory_space typ |> Unsigned.UInt.to_int
+    let unranked_memory_space typ = unranked_memory_space typ |> Unsigned.UInt.to_int
+  end
+
+  module Tuple = struct
+    include Bindings.BuiltinTypes.Tuple
+
+    let get ctx typs =
+      let n = List.length typs |> Intptr.of_int in
+      let typs = CArray.(start (of_list Typs.Type.t typs)) in
+      get ctx n typs
+
+
+    let num_types typ = num_types typ |> Intptr.to_int
+    let nth typ pos = get_type typ Intptr.(of_int pos)
+  end
+
+  module Function = struct
+    include Bindings.BuiltinTypes.Function
+
+    let get ~inputs ~results ctx =
+      let n_inputs = List.length inputs |> Intptr.of_int in
+      let inputs = CArray.(start (of_list Typs.Type.t inputs)) in
+      let n_results = List.length results |> Intptr.of_int in
+      let results = CArray.(start (of_list Typs.Type.t results)) in
+      get ctx n_inputs inputs n_results results
+
+
+    let num_inputs typ = num_inputs typ |> Intptr.to_int
+    let num_results typ = num_results typ |> Intptr.to_int
+    let input typ i = input typ (Intptr.of_int i)
+    let result typ i = result typ (Intptr.of_int i)
+  end
+end
+
+module AffineMap = struct
+  type t = Typs.AffineMap.t structured
 end
 
 let register_all_dialects = Bindings.register_all_dialects

@@ -239,7 +239,6 @@ module Bindings (F : FOREIGN) = struct
 
     (* Same as "mlirUnrankedTensorTypeGet" but returns a nullptr wrapping MlirType
      * on illegal arguments, emitting appropriate diagnostics. *)
-
     let unranked_checked =
       foreign
         "mlirUnrankedTensorTypeGetChecked"
