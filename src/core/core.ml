@@ -11,6 +11,17 @@ module IR = struct
 
     let num_registered_dialects ctx = num_registered_dialects ctx |> Signed.Long.to_int
     let num_loaded_dialects ctx = num_loaded_dialects ctx |> Signed.Long.to_int
+
+    let get_or_load_dialect ctx s =
+      get_or_load_dialect ctx Bindings.StringRef.(of_string s)
+  end
+
+  module Dialect = struct
+    type t = Typs.Dialect.t structured
+
+    include Bindings.Dialect
+
+    let namespace dialect = getf (namespace dialect) Typs.StringRef.data
   end
 
   module Type = struct
@@ -270,6 +281,26 @@ end
 
 module AffineMap = struct
   type t = Typs.AffineMap.t structured
+
+  include Bindings.AffineMap
+
+  let get ctx i j = get ctx Intptr.(of_int i) Intptr.(of_int j)
+  let constant ctx i = constant ctx Int64.(of_int i)
+  let multi_dim_identity ctx i = multi_dim_identity ctx Intptr.(of_int i)
+  let minor_identity ctx i j = minor_identity ctx Intptr.(of_int i) (Intptr.of_int j)
+  let single_constant_result ctx = single_constant_result ctx |> Int64.to_int
+  let num_dims ctx = num_dims ctx |> Intptr.to_int
+  let num_symbols ctx = num_symbols ctx |> Intptr.to_int
+  let num_results ctx = num_results ctx |> Intptr.to_int
+  let num_inputs ctx = num_inputs ctx |> Intptr.to_int
+  let major_sub_map ctx i = major_sub_map ctx (Intptr.of_int i)
+  let minor_sub_map ctx i = minor_sub_map ctx (Intptr.of_int i)
+end
+
+module StandardDialect = struct
+  include Bindings.StandardDialect
+
+  let namespace () = getf (namespace ()) Typs.StringRef.data
 end
 
 let register_all_dialects = Bindings.register_all_dialects

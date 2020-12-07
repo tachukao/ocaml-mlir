@@ -4,7 +4,7 @@ module Bindings (F : FOREIGN) = struct
   open F
 
   (* Gets the context that the given affine map was created with *)
-  let get_context =
+  let context =
     foreign "mlirAffineMapGetContext" (Typs.AffineMap.t @-> returning Typs.Context.t)
 
 

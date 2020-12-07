@@ -253,6 +253,27 @@ let print_builtin_types ctx =
   Printf.printf "\n%!"
 
 
+let print_builtin_attributes ctx = ignore ctx
+let print_affine_map ctx = ignore ctx
+let print_affine_expr ctx = ignore ctx
+
+let register_only_std ctx =
+  assert (Context.(num_loaded_dialects ctx = 1));
+  let std = Context.get_or_load_dialect ctx StandardDialect.(namespace ()) in
+  assert (Dialect.is_null std);
+  StandardDialect.register_standard_dialect ctx;
+  assert (Context.num_registered_dialects ctx = 1);
+  assert (Context.num_loaded_dialects ctx = 1);
+  let std = Context.get_or_load_dialect ctx StandardDialect.(namespace ()) in
+  assert (not (Dialect.is_null std));
+  assert (Context.num_loaded_dialects ctx = 2);
+  let also_std = StandardDialect.load_standard_dialect ctx in
+  assert (Dialect.(equal std also_std));
+  let std_ns = Dialect.namespace std in
+  let also_std_ns = StandardDialect.namespace () in
+  assert (std_ns = also_std_ns)
+
+
 let%expect_test _ =
   with_context (fun ctx ->
       register_all_dialects ctx;
@@ -317,3 +338,20 @@ let%expect_test _ =
   tuple<memref<*xf32, 4>, f32>
   (index, i1) -> (i16, i32, i64)
   |}]
+
+let%expect_test _ =
+  with_context print_builtin_attributes;
+  [%expect {|
+  |}]
+
+let%expect_test _ =
+  with_context print_affine_map;
+  [%expect {|
+  |}]
+
+let%expect_test _ =
+  with_context print_affine_expr;
+  [%expect {|
+  |}]
+
+let%test_unit _ = with_context register_only_std

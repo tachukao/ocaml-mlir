@@ -4,4 +4,4 @@
  (libraries mlir.core)
  (inline_tests)
  (preprocess
-  (pps ppx_expect)))
+  (pps ppx_expect ppx_inline_test)))

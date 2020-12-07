@@ -19,6 +19,31 @@ module IR : sig
 
     (** Returns the number of dialects loaded by the context.*)
     val num_loaded_dialects : t -> int
+
+    (** Sets whether unregistered dialects are allowed in this context. *)
+    val set_allow_unregistered_dialects : t -> bool -> unit
+
+    (** Returns whether the context allows unregistered dialects. *)
+    val get_allow_unregistered_dialects : t -> bool
+
+    (** Gets the dialect instance owned by the given context using the dialect namespace to identify it, loads (i.e., constructs the instance of) the dialect if necessary. If the dialect is not registered with the context, returns null. Use mlirContextLoad<Name>Dialect to load an unregistered dialect. *)
+    val get_or_load_dialect : t -> string -> Dialect.t
+  end
+
+  and Dialect : sig
+    type t
+
+    (** Returns the context that owns the dialect. *)
+    val context : t -> Context.t
+
+    (** Checks if the dialect is null. *)
+    val is_null : t -> bool
+
+    (** Checks if two dialects that belong to the same context are equal. Dialects from different contexts will not compare equal. *)
+    val equal : t -> t -> bool
+
+    (** Returns the namespace of the given dialect. *)
+    val namespace : t -> string
   end
 
   and Type : sig
@@ -353,7 +378,98 @@ module rec BuiltinTypes : sig
 end
 
 and AffineMap : sig
+  open IR
+
   type t
+
+  (** Gets the context that the given affine map was created with *)
+  val context : t -> Context.t
+
+  (** Checks whether an affine map is null. *)
+  val is_null : t -> bool
+
+  (** Checks if two affine maps are equal. *)
+  val equal : t -> t -> bool
+
+  (** Prints an affine map by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
+  (* val print : callback:(string -> 'a -> unit) -> 'a -> t -> unit *)
+
+  (** Prints the affine map to the standard error stream. *)
+  val dump : t -> unit
+
+  (** Creates a zero result affine map with no dimensions or symbols in the context. The affine map is owned by the context. *)
+  val empty : Context.t -> t
+
+  (** Creates a zero result affine map of the given dimensions and symbols in the context. The affine map is owned by the context. *)
+  val get : Context.t -> int -> int -> t
+
+  (** Creates a single constant result affine map in the context. The affine map is owned by the context. *)
+  val constant : Context.t -> int -> t
+
+  (** Creates an affine map with 'numDims' identity in the context. The affine map is owned by the context. *)
+  val multi_dim_identity : Context.t -> int -> t
+
+  (** Creates an identity affine map on the most minor dimensions in the context. The affine map is owned by the context. The function asserts that the number of dimensions is greater or equal to the number of results. *)
+  val minor_identity : Context.t -> int -> int -> t
+
+  (** Creates an affine map with a permutation expression and its size in the context. The permutation expression is a non-empty vector of integers. The elements of the permutation vector must be continuous from 0 and cannot be repeated (i.e. `[1,2,0]` is a valid permutation. `[2,0]` or `[1,1,2]` is an invalid invalid permutation.) The affine map is owned by the context. *)
+  (* val permutation : Context.t -> int array -> t *)
+
+  (** Checks whether the given affine map is an identity affine map. The function asserts that the number of dimensions is greater or equal to the number of results. *)
+  val is_identity : t -> bool
+
+  (** Checks whether the given affine map is a minor identity affine map. *)
+  val is_minor_identity : t -> bool
+
+  (** Checks whether the given affine map is a empty affine map. *)
+  val is_empty : t -> bool
+
+  (** Checks whether the given affine map is a single result constant affine map. *)
+  val is_single_constant : t -> bool
+
+  (** Returns the constant result of the given affine map. The function asserts
+   * that the map has a single constant result. *)
+  val single_constant_result : t -> int
+
+  (** Returns the number of dimensions of the given affine map. *)
+  val num_dims : t -> int
+
+  (** Returns the number of symbols of the given affine map. *)
+  val num_symbols : t -> int
+
+  (** Returns the number of results of the given affine map. *)
+  val num_results : t -> int
+
+  (** Returns the number of inputs (dimensions + symbols) of the given affine map. *)
+  val num_inputs : t -> int
+
+  (** Checks whether the given affine map represents a subset of a symbol-less permutation map. *)
+  val is_projected_permutation : t -> bool
+
+  (** Checks whether the given affine map represents a symbol-less permutation map. *)
+  val is_permutation : t -> bool
+
+  (** Returns the affine map consisting of the `resultPos` subset. *)
+  (* val sub_map : t -> int array -> t *)
+
+  (* Returns the affine map consisting of the most major `numResults` results. Returns the null AffineMap if the `numResults` is equal to zero. Returns the `affineMap` if `numResults` is greater or equals to number of results of the given affine map. *)
+  val major_sub_map : t -> int -> t
+
+  (* Returns the affine map consisting of the most minor `numResults` results. Returns the null AffineMap if the `numResults` is equal to zero. Returns the `affineMap` if `numResults` is greater or equals to number of results of the given affine map. *)
+  val minor_sub_map : t -> int -> t
+end
+
+module StandardDialect : sig
+  open IR
+
+  (** Registers the Standard dialect with the given context. This allows the dialect to be loaded dynamically if needed when parsing. *)
+  val register_standard_dialect : Context.t -> unit
+
+  (** Loads the Standard dialect into the given context. The dialect does _not_ have to be registered in advance. *)
+  val load_standard_dialect : Context.t -> Dialect.t
+
+  (** Returns the namespace of the Standard dialect, suitable for loading it. *)
+  val namespace : unit -> string
 end
 
 (** Registers all dialects known to core MLIR with the provided Context.
