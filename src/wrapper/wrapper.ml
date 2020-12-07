@@ -150,6 +150,9 @@ module BuiltinTypes = struct
   end
 
   module Float = Bindings.BuiltinTypes.Float
+  module Index = Bindings.BuiltinTypes.Index
+  module None = Bindings.BuiltinTypes.None
+  module Complex = Bindings.BuiltinTypes.Complex
 end
 
 let register_all_dialects = Bindings.register_all_dialects

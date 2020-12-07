@@ -154,6 +154,50 @@ let build_with_insertions_and_print ctx =
   Operation.destroy op
 
 
+(* Dumps instances of all builtin types to check that C API works correctly.
+  Additionally, performs simple identity checks that a builtin type
+  constructed with C API can be inspected and has the expected type. The
+  latter achieves full coverage of C API for builtin types. Returns 0 on
+  success and a non-zero error code on failure. *)
+let print_builtin_types ctx =
+  (* Integer types *)
+  let i32 = BuiltinTypes.Integer.get ctx 32 in
+  let si32 = BuiltinTypes.Integer.signed ctx 32 in
+  let ui32 = BuiltinTypes.Integer.unsigned ctx 32 in
+  Printf.printf "@types\n%!";
+  Type.dump i32;
+  Printf.printf "\n%!";
+  Type.dump si32;
+  Printf.printf "\n%!";
+  Type.dump ui32;
+  Printf.printf "\n%!";
+  (* Index Type *)
+  let index = BuiltinTypes.Index.get ctx in
+  Type.dump index;
+  Printf.printf "\n%!";
+  (* Floating-point types *)
+  let bf16 = BuiltinTypes.Float.bf16 ctx in
+  let f16 = BuiltinTypes.Float.f16 ctx in
+  let f32 = BuiltinTypes.Float.f32 ctx in
+  let f64 = BuiltinTypes.Float.f64 ctx in
+  Type.dump bf16;
+  Printf.printf "\n%!";
+  Type.dump f16;
+  Printf.printf "\n%!";
+  Type.dump f32;
+  Printf.printf "\n%!";
+  Type.dump f64;
+  Printf.printf "\n%!";
+  (* None type *)
+  let none = BuiltinTypes.None.get ctx in
+  Type.dump none;
+  Printf.printf "\n%!";
+  (* Complex type *)
+  let cplx = BuiltinTypes.Complex.get f32 in
+  Type.dump cplx;
+  Printf.printf "\n%!"
+
+
 let%expect_test _ =
   with_context (fun ctx ->
       register_all_dialects ctx;
@@ -194,3 +238,19 @@ let%expect_test _ =
       "dummy.op7"() : () -> ()
     }) : () -> ()
     |}]
+
+let%expect_test _ =
+  with_context print_builtin_types;
+  [%expect {|
+  @types
+  i32
+  si32
+  ui32
+  index
+  bf16
+  f16
+  f32
+  f64
+  none
+  complex<f32>
+  |}]

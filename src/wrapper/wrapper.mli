@@ -213,6 +213,33 @@ and BuiltinTypes : sig
     (** Creates a f64 type in the given context. The type is owned by the context. *)
     val f64 : Context.t -> Type.t
   end
+
+  module Index : sig
+    (** Checks whether the given type is an index type. *)
+    val is_index : Type.t -> bool
+
+    (** Creates an index type in the given context. The type is owned by the context. *)
+    val get : Context.t -> Type.t
+  end
+
+  module None : sig
+    (** Checks whether the given type is a None type. *)
+    val is_none : Type.t -> bool
+
+    (** Creates a None type in the given context. The type is owned by the context. *)
+    val get : Context.t -> Type.t
+  end
+
+  module Complex : sig
+    (** Checks whether the given type is a Complex type. *)
+    val is_complex : Type.t -> bool
+
+    (** Creates a complex type with the given element type in the same context as the element type. The type is owned by the context. *)
+    val get : Type.t -> Type.t
+
+    (** Returns the element type of the given complex type. *)
+    val element_type : Type.t -> Type.t
+  end
 end
 
 (** Registers all dialects known to core MLIR with the provided Context.

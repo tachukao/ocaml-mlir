@@ -102,7 +102,7 @@ module Bindings (F : FOREIGN) = struct
 
     (* Creates a None type in the given context. The type is owned by the
      * context. *)
-    let none = foreign "mlirNoneTypeGet" (Typs.Context.t @-> returning Typs.Type.t)
+    let get = foreign "mlirNoneTypeGet" (Typs.Context.t @-> returning Typs.Type.t)
   end
 
   (*===----------------------------------------------------------------------===
