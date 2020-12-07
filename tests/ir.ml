@@ -108,9 +108,22 @@ let f ctx =
   construct_and_traverse_ir ctx
 
 
-let test () =
+let%expect_test _ =
   with_context (fun ctx -> f ctx);
-  Alcotest.(check bool) "dummy" true true
-
-
-let test_set = [ "runs", `Quick, test ]
+  [%expect
+    {|
+      module  {
+        func @add(%arg0: memref<?xf32>, %arg1: memref<?xf32>) {
+          %c0 = constant 0 : index
+          %0 = dim %arg0, %c0 : memref<?xf32>
+          %c1 = constant 1 : index
+          scf.for %arg2 = %c0 to %0 step %c1 {
+            %1 = load %arg0[%arg2] : memref<?xf32>
+            %2 = load %arg1[%arg2] : memref<?xf32>
+            %3 = addf %1, %2 : f32
+            store %3, %arg0[%arg2] : memref<?xf32>
+          }
+          return
+        }
+      }
+    |}]

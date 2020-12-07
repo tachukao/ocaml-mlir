@@ -1,5 +1,7 @@
-(tests
- (names test_runner)
- (libraries alcotest mlir.wrapper)
- (action
-  (run %{test} -e)))
+(library
+ (name tests)
+ (public_name mlir.tests)
+ (libraries mlir.wrapper)
+ (inline_tests)
+ (preprocess
+  (pps ppx_expect)))
