@@ -1,7 +1,7 @@
 (executable
  (name gen_types)
  (modules gen_types)
- (libraries mlir.types ctypes ctypes.stubs))
+ (libraries mlir.stubs.types ctypes ctypes.stubs))
 
 (executable
  (name gen_stubs)

@@ -1,7 +1,7 @@
 (library
  (name tests)
  (public_name mlir.tests)
- (libraries mlir.wrapper)
+ (libraries mlir.core)
  (inline_tests)
  (preprocess
   (pps ppx_expect)))

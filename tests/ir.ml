@@ -1,4 +1,5 @@
-open Wrapper
+open Core
+open IR
 
 let populate_loop_body ctx loop_body loc func_body =
   let iv = Block.argument loop_body 0 in

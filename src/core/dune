@@ -1,7 +1,7 @@
 (library
- (name wrapper)
- (public_name mlir.wrapper)
- (libraries mlir.stubs mlir.types ctypes.stubs ctypes ctypes.foreign)
+ (name core)
+ (public_name mlir.core)
+ (libraries mlir.stubs ctypes.stubs ctypes ctypes.foreign)
  (foreign_stubs
   (language c)
   (names mlir_stubs)

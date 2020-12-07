@@ -6,7 +6,7 @@
 (library
  (name stubs)
  (public_name mlir.stubs)
- (libraries mlir.types ctypes.stubs ctypes ctypes.foreign))
+ (libraries mlir.stubs.types ctypes.stubs ctypes ctypes.foreign))
 
 (rule
  (targets c_flags.sexp c_library_flags.sexp)

@@ -1,4 +1,4 @@
 (library
  (name types)
- (public_name mlir.types)
+ (public_name mlir.stubs.types)
  (libraries ctypes.stubs ctypes))
