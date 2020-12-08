@@ -77,9 +77,7 @@ module IR : sig
     (** Takes a block owned by the caller and inserts it at `pos` to the given region. This is an expensive operation that linearly scans the region, prefer insertAfter/Before instead. *)
     val insert_owned_block_before : t -> Block.t -> Block.t -> unit
 
-    (** Takes a block owned by the caller and inserts it after the (non-owned)
- * reference block in the given region. The reference block must belong to the
- * region. If the reference block is null, prepends the block to the region. *)
+    (** Takes a block owned by the caller and inserts it after the (non-owned) reference block in the given region. The reference block must belong to the region. If the reference block is null, prepends the block to the region. *)
     val insert_owned_block_after : t -> Block.t -> Block.t -> unit
   end
 
