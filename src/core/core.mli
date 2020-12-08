@@ -183,6 +183,18 @@ module IR : sig
     (** Creates a new, empty module and transfers ownership to the caller. *)
     val empty : Location.t -> t
 
+    (** Parses a module from the string and transfers ownership to the caller. *)
+    val parse : Context.t -> string -> t
+
+    (** Checks whether a module is null. *)
+    val is_null : t -> bool
+
+    (** Takes a module owned by the caller and deletes it. *)
+    val destroy : t -> unit
+
+    (** Gets the context that a module was created with. *)
+    val context : t -> Context.t
+
     (** Gets the body of the module, i.e. the only block it contains. *)
     val body : t -> Block.t
 
@@ -392,6 +404,7 @@ and AffineMap : sig
   val equal : t -> t -> bool
 
   (** Prints an affine map by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
+
   (* val print : callback:(string -> 'a -> unit) -> 'a -> t -> unit *)
 
   (** Prints the affine map to the standard error stream. *)
@@ -413,6 +426,7 @@ and AffineMap : sig
   val minor_identity : Context.t -> int -> int -> t
 
   (** Creates an affine map with a permutation expression and its size in the context. The permutation expression is a non-empty vector of integers. The elements of the permutation vector must be continuous from 0 and cannot be repeated (i.e. `[1,2,0]` is a valid permutation. `[2,0]` or `[1,1,2]` is an invalid invalid permutation.) The affine map is owned by the context. *)
+
   (* val permutation : Context.t -> int array -> t *)
 
   (** Checks whether the given affine map is an identity affine map. The function asserts that the number of dimensions is greater or equal to the number of results. *)
@@ -450,6 +464,7 @@ and AffineMap : sig
   val is_permutation : t -> bool
 
   (** Returns the affine map consisting of the `resultPos` subset. *)
+
   (* val sub_map : t -> int array -> t *)
 
   (* Returns the affine map consisting of the most major `numResults` results. Returns the null AffineMap if the `numResults` is equal to zero. Returns the `affineMap` if `numResults` is greater or equals to number of results of the given affine map. *)
@@ -470,6 +485,70 @@ module StandardDialect : sig
 
   (** Returns the namespace of the Standard dialect, suitable for loading it. *)
   val namespace : unit -> string
+end
+
+module rec Pass : sig
+  type t
+end
+
+and PassManager : sig
+  open IR
+
+  type t
+
+  (** Create a new top-level PassManager. *)
+  val create : Context.t -> t
+
+  (** Destroy the provided PassManager. *)
+  val destroy : t -> unit
+
+  (** Checks if a PassManager is null. *)
+  val is_null : t -> bool
+
+  (** Cast a top-level PassManager to a generic OpPassManager. *)
+  val to_op_pass_manager : t -> OpPassManager.t
+
+  (** Run the provided `passManager` on the given `module`. *)
+  val run : t -> Module.t -> bool
+
+  (** Nest an OpPassManager under the top-level PassManager, the nested passmanager will only run on operations matching the provided name. The returned OpPassManager will be destroyed when the parent is destroyed. To further nest more OpPassManager under the newly returned one, see `mlirOpPassManagerNest` below. *)
+  val nested_under : t -> string -> OpPassManager.t
+
+  (** Add a pass and transfer ownership to the provided top-level mlirPassManager. If the pass is not a generic operation pass or a ModulePass, a new OpPassManager is implicitly nested under the provided PassManager. *)
+  val add_owned_pass : t -> Pass.t -> unit
+end
+
+and OpPassManager : sig
+  type t
+end
+
+module Transforms : sig
+  val register_passes : unit -> unit
+
+  module AffineLoopFusion : Transforms_intf.Sig with type t := Pass.t
+  module AffinePipelineDataTransfer : Transforms_intf.Sig with type t := Pass.t
+  module BufferDeallocation : Transforms_intf.Sig with type t := Pass.t
+  module BufferHoisting : Transforms_intf.Sig with type t := Pass.t
+  module BufferLoopHoisting : Transforms_intf.Sig with type t := Pass.t
+  module BufferResultsToOutParams : Transforms_intf.Sig with type t := Pass.t
+  module CSE : Transforms_intf.Sig with type t := Pass.t
+  module Canonicalizer : Transforms_intf.Sig with type t := Pass.t
+  module CopyRemoval : Transforms_intf.Sig with type t := Pass.t
+  module FinalizingBufferize : Transforms_intf.Sig with type t := Pass.t
+  module Inliner : Transforms_intf.Sig with type t := Pass.t
+  module LocationSnapshot : Transforms_intf.Sig with type t := Pass.t
+  module LoopCoalescing : Transforms_intf.Sig with type t := Pass.t
+  module LoopInvariantCodeMotion : Transforms_intf.Sig with type t := Pass.t
+  module MemRefDataFlowOpt : Transforms_intf.Sig with type t := Pass.t
+  module NormlizeMemRefs : Transforms_intf.Sig with type t := Pass.t
+  module ParallelLoopCollapsing : Transforms_intf.Sig with type t := Pass.t
+  module PrintCFG : Transforms_intf.Sig with type t := Pass.t
+  module PrintOp : Transforms_intf.Sig with type t := Pass.t
+  module PrintOpStats : Transforms_intf.Sig with type t := Pass.t
+  module PromoteBuffersToStack : Transforms_intf.Sig with type t := Pass.t
+  module SCCP : Transforms_intf.Sig with type t := Pass.t
+  module StripDebugInfo : Transforms_intf.Sig with type t := Pass.t
+  module SymbolDCE : Transforms_intf.Sig with type t := Pass.t
 end
 
 (** Registers all dialects known to core MLIR with the provided Context.

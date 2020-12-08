@@ -16,7 +16,11 @@ module Bindings (F : FOREIGN) = struct
     let is_null = foreign "mlirPassManagerIsNull" (Typs.PassManager.t @-> returning bool)
 
     (* Cast a top-level PassManager to a generic OpPassManager. *)
-    let to_op_pass_manager = Typs.PassManager.t @-> returning Typs.OpPassManager.t
+    let to_op_pass_manager =
+      foreign
+        "mlirPassManagerGetAsOpPassManager"
+        (Typs.PassManager.t @-> returning Typs.OpPassManager.t)
+
 
     (* Run the provided `passManager` on the given `module`. *)
     let run =

@@ -142,6 +142,8 @@ module IR = struct
     type t = Typs.Module.t structured
 
     include Bindings.Module
+
+    let parse ctx str = parse ctx Bindings.StringRef.(of_string str)
   end
 
   module Region = struct
@@ -302,6 +304,27 @@ module StandardDialect = struct
 
   let namespace () = getf (namespace ()) Typs.StringRef.data
 end
+
+module Pass = struct
+  type t = Typs.Pass.t structured
+end
+
+module PassManager = struct
+  type t = Typs.PassManager.t structured
+
+  include Bindings.PassManager
+
+  let run pass m = Bindings.LogicalResult.(is_success (run pass m))
+  let nested_under pm s = nested_under pm Bindings.StringRef.(of_string s)
+end
+
+module OpPassManager = struct
+  type t = Typs.OpPassManager.t structured
+
+  include Bindings.OpPassManager
+end
+
+module Transforms = Bindings.Transforms
 
 let register_all_dialects = Bindings.register_all_dialects
 
