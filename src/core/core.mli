@@ -8,7 +8,7 @@ module IR : sig
     (** Checks if two contexts are equal. *)
     val equal : t -> t -> bool
 
-    (* Takes an MLIR context owned by the caller and destroys it. *)
+    (** Takes an MLIR context owned by the caller and destroys it. *)
     val destroy : t -> unit
 
     (** Checks whether a context is null. *)
@@ -95,10 +95,10 @@ module IR : sig
   and Attribute : sig
     type t
 
-    (* Parses an attribute. The attribute is owned by the context. *)
+    (** Parses an attribute. The attribute is owned by the context. *)
     val parse : Context.t -> string -> t
 
-    (* Associates an attribute with the name. Takes ownership of neither. *)
+    (** Associates an attribute with the name. Takes ownership of neither. *)
     val name : string -> t -> NamedAttribute.t
   end
 
@@ -196,7 +196,7 @@ module IR : sig
     (** Gets the body of the module, i.e. the only block it contains. *)
     val body : t -> Block.t
 
-    (* Views the module as a generic operation. *)
+    (** Views the module as a generic operation. *)
     val operation : t -> Operation.t
   end
 end
@@ -313,7 +313,7 @@ module rec BuiltinTypes : sig
     (** Creates an unranked tensor type with the given element type in the same context as the element type. The type is owned by the context. *)
     val unranked : Type.t -> Type.t
 
-    (* Same as "mlirUnrankedTensorTypeGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
+    (** Same as "mlirUnrankedTensorTypeGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
     val unranked_checked : Type.t -> Location.t -> Type.t
   end
 
@@ -373,16 +373,16 @@ module rec BuiltinTypes : sig
     (** Creates a function type, mapping a list of input types to result types. *)
     val get : inputs:Type.t list -> results:Type.t list -> Context.t -> Type.t
 
-    (* Returns the number of input types. *)
+    (** Returns the number of input types. *)
     val num_inputs : Type.t -> int
 
-    (* Returns the number of result types. *)
+    (** Returns the number of result types. *)
     val num_results : Type.t -> int
 
-    (* Returns the pos-th input type. *)
+    (** Returns the pos-th input type. *)
     val input : Type.t -> int -> Type.t
 
-    (* Returns the pos-th result type. *)
+    (** Returns the pos-th result type. *)
     val result : Type.t -> int -> Type.t
   end
 end
@@ -465,10 +465,10 @@ and AffineMap : sig
 
   (* val sub_map : t -> int array -> t *)
 
-  (* Returns the affine map consisting of the most major `numResults` results. Returns the null AffineMap if the `numResults` is equal to zero. Returns the `affineMap` if `numResults` is greater or equals to number of results of the given affine map. *)
+  (** Returns the affine map consisting of the most major `numResults` results. Returns the null AffineMap if the `numResults` is equal to zero. Returns the `affineMap` if `numResults` is greater or equals to number of results of the given affine map. *)
   val major_sub_map : t -> int -> t
 
-  (* Returns the affine map consisting of the most minor `numResults` results. Returns the null AffineMap if the `numResults` is equal to zero. Returns the `affineMap` if `numResults` is greater or equals to number of results of the given affine map. *)
+  (** Returns the affine map consisting of the most minor `numResults` results. Returns the null AffineMap if the `numResults` is equal to zero. Returns the `affineMap` if `numResults` is greater or equals to number of results of the given affine map. *)
   val minor_sub_map : t -> int -> t
 end
 
@@ -566,5 +566,5 @@ end
    This is needed before creating IR for these Dialects. *)
 val register_all_dialects : IR.Context.t -> unit
 
-(* [with_context f]  creates a context [ctx], applies [f] to it, destroys it and returns the result of applying [f] *)
+(** [with_context f]  creates a context [ctx], applies [f] to it, destroys it and returns the result of applying [f] *)
 val with_context : (IR.Context.t -> 'a) -> 'a
