@@ -520,6 +520,19 @@ end
 
 and OpPassManager : sig
   type t
+
+  (** Nest an OpPassManager under the provided OpPassManager, the nested passmanager will only run on operations matching the provided name. The returned OpPassManager will be destroyed when the parent is destroyed. *)
+  val nested_under : t -> string -> t
+
+  (** Add a pass and transfer ownership to the provided mlirOpPassManager. If the pass is not a generic operation pass or matching the type of the provided PassManager, a new OpPassManager is implicitly nested under the provided PassManager. *)
+  val add_owned_pass : t -> Pass.t -> unit
+
+  (** Print a textual MLIR pass pipeline by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
+
+  (* val print_pass_pipeline : t -> (string -> 'a -> unit) -> 'a -> unit *)
+
+  (** Parse a textual MLIR pass pipeline and add it to the provided OpPassManager. *)
+  val parse_pass_pipeline : t -> string -> bool
 end
 
 module Transforms : sig

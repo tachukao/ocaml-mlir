@@ -322,6 +322,12 @@ module OpPassManager = struct
   type t = Typs.OpPassManager.t structured
 
   include Bindings.OpPassManager
+
+  let nested_under pm s = nested_under pm Bindings.StringRef.(of_string s)
+
+  let parse_pass_pipeline pm s =
+    parse_pass_pipeline pm Bindings.StringRef.(of_string s)
+    |> Bindings.LogicalResult.is_success
 end
 
 module Transforms = Bindings.Transforms
