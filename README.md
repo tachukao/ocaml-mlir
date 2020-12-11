@@ -33,7 +33,7 @@ dune runtest # test the build
 ```
 
 ## API
-The entry point to the bindings is `mlir.core` (see [core.mli](src/core/core.mli)).
+The entry point to the bindings is `mlir` (see [mlir.mli](src/mlir/mlir.mli)).
 It is deliberately low-level, closely matching the MLIR C API.
-In the future, we plan to write a higher-level API that wraps around `mlir.core`. 
+In the future, we plan to write a higher-level API that wraps around `mlir`. 
 This is a first shot at OCaml bindings to the MLIR C API and is likely to undergo major changes in the near future. 

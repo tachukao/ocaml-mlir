@@ -1,5 +1,5 @@
 (* Recreating CAPI test: pass.c *)
-open Core
+open Mlir
 open IR
 
 (* test run pass on module *)

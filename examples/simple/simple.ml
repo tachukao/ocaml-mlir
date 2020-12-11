@@ -1,4 +1,4 @@
-open Core
+open Mlir
 open IR
 
 let () =

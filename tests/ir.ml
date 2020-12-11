@@ -1,5 +1,5 @@
 (* Recreating CAPI test: ir.c *)
-open Core
+open Mlir
 open IR
 
 let populate_loop_body ctx loop_body loc func_body =
