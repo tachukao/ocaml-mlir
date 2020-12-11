@@ -1,17 +1,46 @@
+(** MLIR Context *)
 type mlcontext
+
+(** MLIR Dialect *)
 type mldialect
+
+(** MLIR Type *)
 type mltype
+
+(** MLIR Block *)
 type mlblock
+
+(** MLIR Region *)
 type mlregion
+
+(** MLIR Location *)
 type mllocation
+
+(** MLIR Module *)
 type mlmodule
+
+(** MLIR Value *)
 type mlvalue
+
+(** MLIR Operation *)
 type mlop
+
+(** MLIR Operation State *)
 type mlop_state
+
+(** MLIR Attribute *)
 type mlattr
+
+(** MLIR Named Attribute *)
 type mlnamed_attr
+
+(** MLIR Pass *)
 type mlpass
+
+(** MLIR Pass Manager *)
 type mlpm
+
+(** MLIR Op Pass Manager *)
 type mlop_pm
 
 module IR : sig
