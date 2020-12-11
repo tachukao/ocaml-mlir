@@ -6,13 +6,13 @@ type mlregion
 type mllocation
 type mlmodule
 type mlvalue
-type mloperation
-type mloperationstate
-type mlattribute
-type mlnamedattribute
+type mlop
+type mlop_state
+type mlattr
+type mlnamed_attr
 type mlpass
-type mlpassmanager
-type mloppassmanager
+type mlpm
+type mlop_pm
 
 module IR : sig
   module Context : sig
@@ -96,65 +96,65 @@ module IR : sig
 
   module Attribute : sig
     (** Parses an attribute. The attribute is owned by the context. *)
-    val parse : mlcontext -> string -> mlattribute
+    val parse : mlcontext -> string -> mlattr
 
     (** Gets the context that an attribute was created with. *)
-    val context : mlattribute -> mlcontext
+    val context : mlattr -> mlcontext
 
     (** Gets the type of this attribute. *)
-    val get_type : mlattribute -> mltype
+    val get_type : mlattr -> mltype
 
     (** Checks whether an attribute is null. *)
-    val is_null : mlattribute -> bool
+    val is_null : mlattr -> bool
 
     (** Checks if two attributes are equal. *)
-    val equal : mlattribute -> mlattribute -> bool
+    val equal : mlattr -> mlattr -> bool
 
     (** Prints an attribute by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
-    val print : callback:(string -> unit) -> mlattribute -> unit
+    val print : callback:(string -> unit) -> mlattr -> unit
 
     (** Prints the attribute to the standard error stream. *)
-    val dump : mlattribute -> unit
+    val dump : mlattr -> unit
 
     (** Associates an attribute with the name. Takes ownership of neither. *)
-    val name : string -> mlattribute -> mlnamedattribute
+    val name : string -> mlattr -> mlnamed_attr
   end
 
   module OperationState : sig
     (** Constructs an operation state from a name and a location. *)
-    val get : string -> mllocation -> mloperationstate
+    val get : string -> mllocation -> mlop_state
 
     (** Adds a list of results to the operation state. *)
-    val add_results : mloperationstate -> mltype list -> unit
+    val add_results : mlop_state -> mltype list -> unit
 
     (** Adds a list of named attributes to the operation state. *)
-    val add_named_attributes : mloperationstate -> mlnamedattribute list -> unit
+    val add_named_attributes : mlop_state -> mlnamed_attr list -> unit
 
     (** Adds a list of regions to the operation state. *)
-    val add_owned_regions : mloperationstate -> mlregion list -> unit
+    val add_owned_regions : mlop_state -> mlregion list -> unit
 
     (** Adds a list of operands to the operation state. *)
-    val add_operands : mloperationstate -> mlvalue list -> unit
+    val add_operands : mlop_state -> mlvalue list -> unit
   end
 
   module Operation : sig
     (** Creates an operation and transfers ownership to the caller. *)
-    val create : mloperationstate -> mloperation
+    val create : mlop_state -> mlop
 
     (** Takes an operation owned by the caller and destroys it. *)
-    val destroy : mloperation -> unit
+    val destroy : mlop -> unit
 
     (** Checks whether the underlying operation is null. *)
-    val is_null : mloperation -> bool
+    val is_null : mlop -> bool
 
     (** Returns `pos`-th region attached to the operation. *)
-    val region : mloperation -> int -> mlregion
+    val region : mlop -> int -> mlregion
 
     (** Returns `pos`-th result of the operation. *)
-    val result : mloperation -> int -> mlvalue
+    val result : mlop -> int -> mlvalue
 
     (** Prints an operation to stderr. *)
-    val dump : mloperation -> unit
+    val dump : mlop -> unit
   end
 
   module Value : sig end
@@ -170,19 +170,19 @@ module IR : sig
     val argument : mlblock -> int -> mlvalue
 
     (** Returns the first operation in the block. *)
-    val first_operation : mlblock -> mloperation
+    val first_operation : mlblock -> mlop
 
     (** Takes an operation owned by the caller and inserts it as `pos` to the block. This is an expensive operation that scans the block linearly, prefer insertBefore/After instead. *)
-    val insert_owned_operation : mlblock -> int -> mloperation -> unit
+    val insert_owned_operation : mlblock -> int -> mlop -> unit
 
     (** Takes an operation owned by the caller and inserts it before the (non-owned) reference operation in the given block. If the reference is null, appends the operation. Otherwise, the reference must belong to the block. *)
-    val insert_owned_operation_before : mlblock -> mloperation -> mloperation -> unit
+    val insert_owned_operation_before : mlblock -> mlop -> mlop -> unit
 
     (** Takes an operation owned by the caller and inserts it after the (non-owned) reference operation in the given block. If the reference is null, prepends the operation. Otherwise, the reference must belong to the block. *)
-    val insert_owned_operation_after : mlblock -> mloperation -> mloperation -> unit
+    val insert_owned_operation_after : mlblock -> mlop -> mlop -> unit
 
     (** Takes an operation owned by the caller and appends it to the block. *)
-    val append_owned_operation : mlblock -> mloperation -> unit
+    val append_owned_operation : mlblock -> mlop -> unit
   end
 
   module Module : sig
@@ -205,7 +205,7 @@ module IR : sig
     val body : mlmodule -> mlblock
 
     (** Views the module as a generic operation. *)
-    val operation : mlmodule -> mloperation
+    val operation : mlmodule -> mlop
   end
 end
 
@@ -396,271 +396,271 @@ end
 and BuiltinAttributes : sig
   module AffineMap : sig
     (** Checks whether the given attribute is an affine map attribute. *)
-    val is_affine_map : mlattribute -> bool
+    val is_affine_map : mlattr -> bool
 
     (** Creates an affine map attribute wrapping the given map. The attribute belongs to the same context as the affine map. *)
-    val get : AffineMap.t -> mlattribute
+    val get : AffineMap.t -> mlattr
 
     (** Returns the affine map wrapped in the given affine map attribute. *)
-    val value : mlattribute -> AffineMap.t
+    val value : mlattr -> AffineMap.t
   end
 
   module Array : sig
     (* Checks whether the given attribute is an array attribute. *)
-    val is_array : mlattribute -> bool
+    val is_array : mlattr -> bool
 
     (** Creates an array element containing the given list of elements in the given context. *)
-    val get : mlcontext -> mlattribute list -> mlattribute
+    val get : mlcontext -> mlattr list -> mlattr
 
     (** Returns the number of elements stored in the given array attribute. *)
-    val num_elements : mlattribute -> int
+    val num_elements : mlattr -> int
 
     (** Returns pos-th element stored in the given array attribute. *)
-    val element : mlattribute -> int -> mlattribute
+    val element : mlattr -> int -> mlattr
   end
 
   module Dictionary : sig
     (** Checks whether the given attribute is a dictionary attribute. *)
-    val is_dicationary : mlattribute -> bool
+    val is_dicationary : mlattr -> bool
 
     (** Creates a dictionary attribute containing the given list of elements in the provided context. *)
-    val get : mlcontext -> mlnamedattribute list -> mlattribute
+    val get : mlcontext -> mlnamed_attr list -> mlattr
 
     (** Returns the number of attributes contained in a dictionary attribute. *)
-    val num_elements : mlattribute -> int
+    val num_elements : mlattr -> int
 
     (** Returns pos-th element of the given dictionary attribute. *)
-    val element : mlattribute -> int -> mlnamedattribute
+    val element : mlattr -> int -> mlnamed_attr
 
     (** Returns the dictionary attribute element with the given name or NULL if the given name does not exist in the dictionary. *)
-    val element_by_name : mlattribute -> string -> mlattribute
+    val element_by_name : mlattr -> string -> mlattr
   end
 
   module Float : sig
     (* TODO: add support for APFloat and APInt to LLVM IR C API, then expose the relevant functions here. *)
 
     (** Checks whether the given attribute is a floating point attribute. *)
-    val is_float : mlattribute -> bool
+    val is_float : mlattr -> bool
 
     (** Creates a floating point attribute in the given context with the given double  and double-precision FP semantics. *)
-    val get : mlcontext -> mltype -> float -> mlattribute
+    val get : mlcontext -> mltype -> float -> mlattr
 
     (** Same as "mlirFloatAttrDoubleGet", but if the type is not valid for a construction of a FloatAttr, returns a null MlirAttribute. *)
-    val get_checked : mltype -> float -> mllocation -> mlattribute
+    val get_checked : mltype -> float -> mllocation -> mlattr
 
     (** Returns the  stored in the given floating point attribute, interpreting the  as double. *)
-    val value : mlattribute -> float
+    val value : mlattr -> float
   end
 
   module Integer : sig
     (* TODO: add support for APFloat and APInt to LLVM IR C API, then expose the relevant functions here. *)
 
     (** Checks whether the given attribute is an integer attribute. *)
-    val is_integer : mlattribute -> bool
+    val is_integer : mlattr -> bool
 
     (** Creates an integer attribute of the given type with the given integer . *)
-    val get : mltype -> int -> mlattribute
+    val get : mltype -> int -> mlattr
 
     (** Returns the  stored in the given integer attribute, assuming the value fits into a 64-bit integer. *)
-    val value : mlattribute -> int
+    val value : mlattr -> int
   end
 
   module Bool : sig
     (** Checks whether the given attribute is a bool attribute. *)
-    val is_bool : mlattribute -> bool
+    val is_bool : mlattr -> bool
 
     (** Creates a bool attribute in the given context with the given . *)
-    val get : mlcontext -> int -> mlattribute
+    val get : mlcontext -> int -> mlattr
 
     (** Returns the  stored in the given bool attribute. *)
-    val value : mlattribute -> bool
+    val value : mlattr -> bool
   end
 
   module IntegerSet : sig
     (** Checks whether the given attribute is an integer set attribute. *)
-    val is_integer_set : mlattribute -> bool
+    val is_integer_set : mlattr -> bool
   end
 
   module Opaque : sig
     (** Checks whether the given attribute is an opaque attribute. *)
-    val is_opaque : mlattribute -> bool
+    val is_opaque : mlattr -> bool
 
     (** Creates an opaque attribute in the given context associated with the dialect identified by its namespace. The attribute contains opaque byte data of the specified length (data need not be null-terminated). *)
-    val get : mlcontext -> string -> string -> mltype -> mlattribute
+    val get : mlcontext -> string -> string -> mltype -> mlattr
 
     (** Returns the namespace of the dialect with which the given opaque attribute is associated. The namespace string is owned by the context. *)
-    val namespace : mlattribute -> string
+    val namespace : mlattr -> string
 
     (** Returns the raw data as a string reference. The data remains live as long as the context in which the attribute lives. *)
-    val data : mlattribute -> string
+    val data : mlattr -> string
   end
 
   module String : sig
     (** checks whether the given attribute is a string attribute. *)
-    val is_string : mlattribute -> bool
+    val is_string : mlattr -> bool
 
     (** Creates a string attribute in the given context containing the given string. *)
-    val get : mlcontext -> string -> mlattribute
+    val get : mlcontext -> string -> mlattr
 
     (** Creates a string attribute in the given context containing the given string. Additionally, the attribute has the given type. *)
 
-    val typed_get : mltype -> string -> mlattribute
+    val typed_get : mltype -> string -> mlattr
 
     (** Returns the attribute s as a string reference. The data remains live as long as the context in which the attribute lives. *)
-    val value : mlattribute -> string
+    val value : mlattr -> string
   end
 
   module SymbolRef : sig
     (** Checks whether the given attribute is a symbol reference attribute. *)
-    val is_symbol_ref : mlattribute -> bool
+    val is_symbol_ref : mlattr -> bool
 
     (** Creates a symbol reference attribute in the given context referencing a symbol identified by the given string inside a list of nested references. Each of the references in the list must not be nested. *)
-    val get : mlcontext -> string -> mlattribute list -> mlattribute
+    val get : mlcontext -> string -> mlattr list -> mlattr
 
     (** Returns the string reference to the root referenced symbol. The data remains live as long as the context in which the attribute lives. *)
-    val root_ref : mlattribute -> string
+    val root_ref : mlattr -> string
 
     (** Returns the string reference to the leaf referenced symbol. The data remains live as long as the context in which the attribute lives. *)
-    val leaf_ref : mlattribute -> string
+    val leaf_ref : mlattr -> string
 
     (** Returns the number of references nested in the given symbol reference attribute. *)
-    val num_nested_refs : mlattribute -> int
+    val num_nested_refs : mlattr -> int
 
     (** Returns pos-th reference nested in the given symbol reference attribute. *)
-    val nested_ref : mlattribute -> int -> mlattribute
+    val nested_ref : mlattr -> int -> mlattr
   end
 
   module FlatSymbolRef : sig
     (** Checks whether the given attribute is a flat symbol reference attribute. *)
-    val is_flat_symbol_ref : mlattribute -> bool
+    val is_flat_symbol_ref : mlattr -> bool
 
     (** Creates a flat symbol reference attribute in the given context referencing a symbol identified by the given string. *)
-    val get : mlcontext -> string -> mlattribute
+    val get : mlcontext -> string -> mlattr
 
     (** Returns the referenced symbol as a string reference. The data remains live as long as the context in which the attribute lives. *)
-    val value : mlattribute -> string
+    val value : mlattr -> string
   end
 
   module Type : sig
     (** Checks whether the given attribute is a type attribute. *)
-    val is_type : mlattribute -> bool
+    val is_type : mlattr -> bool
 
     (** Creates a type attribute wrapping the given type in the same context as the type. *)
-    val get : mltype -> mlattribute
+    val get : mltype -> mlattr
 
     (** Returns the type stored in the given type attribute. *)
-    val value : mlattribute -> mltype
+    val value : mlattr -> mltype
   end
 
   module Unit : sig
     (** Checks whether the given attribute is a unit attribute. *)
-    val is_unit : mlattribute -> bool
+    val is_unit : mlattr -> bool
 
     (** Creates a unit attribute in the given context. *)
-    val get : mlcontext -> mlattribute
+    val get : mlcontext -> mlattr
   end
 
   module Elements : sig
     (** Checks whether the given attribute is an elements attribute. *)
-    val is_elements : mlattribute -> bool
+    val is_elements : mlattr -> bool
 
     (** Returns the element at the given rank-dimensional index. *)
-    val get : mlattribute -> int list -> mlattribute
+    val get : mlattr -> int list -> mlattr
 
     (** Checks whether the given rank-dimensional index is valid in the given elements attribute. *)
-    val is_valid_index : mlattribute -> int list -> bool
+    val is_valid_index : mlattr -> int list -> bool
 
     (** Gets the total number of elements in the given elements attribute. In order to iterate over the attribute, obtain its type, which must be a statically shaped type and use its sizes to build a multi-dimensional index. *)
-    val num_elements : mlattribute -> int
+    val num_elements : mlattr -> int
 
     module Dense : sig
       (* TODO: decide on the interface and add support for complex elements. *)
       (* TODO: add support for APFloat and APInt to LLVM IR C API, then expose the relevant functions here. *)
 
       (** Checks whether the given attribute is a dense elements attribute. *)
-      val is_dense : mlattribute -> bool
+      val is_dense : mlattr -> bool
 
-      val is_dense_int : mlattribute -> bool
-      val is_dense_fpe : mlattribute -> bool
+      val is_dense_int : mlattr -> bool
+      val is_dense_fpe : mlattr -> bool
 
       (** Creates a dense elements attribute with the given Shaped type and elements in the same context as the type. *)
-      val get : mltype -> mlattribute list -> mlattribute
+      val get : mltype -> mlattr list -> mlattr
 
       (** Creates a dense elements attribute with the given Shaped type containing a single replicated element (splat). *)
-      val splat_get : mltype -> mlattribute -> mlattribute
+      val splat_get : mltype -> mlattr -> mlattr
 
-      val bool_splat_get : mltype -> bool -> mlattribute
-      val uint32_splat_get : mltype -> int -> mlattribute
-      val int32_splat_get : mltype -> int -> mlattribute
-      val uint64_splat_get : mltype -> int -> mlattribute
-      val int64_splat_get : mltype -> int -> mlattribute
-      val float_splat_get : mltype -> float -> mlattribute
-      val double_splat_get : mltype -> float -> mlattribute
+      val bool_splat_get : mltype -> bool -> mlattr
+      val uint32_splat_get : mltype -> int -> mlattr
+      val int32_splat_get : mltype -> int -> mlattr
+      val uint64_splat_get : mltype -> int -> mlattr
+      val int64_splat_get : mltype -> int -> mlattr
+      val float_splat_get : mltype -> float -> mlattr
+      val double_splat_get : mltype -> float -> mlattr
 
       (** Creates a dense elements attribute with the given shaped type from elements of a specific type. Expects the element type of the shaped type to match the * data element type. *)
-      val bool_get : mltype -> int list -> mlattribute
+      val bool_get : mltype -> int list -> mlattr
 
-      val uint32_get : mltype -> int list -> mlattribute
-      val int32_get : mltype -> int list -> mlattribute
-      val uint64_get : mltype -> int list -> mlattribute
-      val int64_get : mltype -> int list -> mlattribute
-      val float_get : mltype -> float list -> mlattribute
-      val double_get : mltype -> float list -> mlattribute
+      val uint32_get : mltype -> int list -> mlattr
+      val int32_get : mltype -> int list -> mlattr
+      val uint64_get : mltype -> int list -> mlattr
+      val int64_get : mltype -> int list -> mlattr
+      val float_get : mltype -> float list -> mlattr
+      val double_get : mltype -> float list -> mlattr
 
       (** Creates a dense elements attribute with the given shaped type from string elements. *)
-      val string_get : mltype -> string list -> mlattribute
+      val string_get : mltype -> string list -> mlattr
 
       (** Creates a dense elements attribute that has the same data as the given dense elements attribute and a different shaped type. The new type must have the same total number of elements. *)
-      val reshape_get : mlattribute -> mltype -> mlattribute
+      val reshape_get : mlattr -> mltype -> mlattr
 
       (** Checks whether the given dense elements attribute contains a single replicated  (splat). *)
-      val is_splat : mlattribute -> bool
+      val is_splat : mlattr -> bool
 
       (** Returns the single replicated  (splat) of a specific type contained by the given dense elements attribute. *)
-      val splat_value : mlattribute -> mlattribute
+      val splat_value : mlattr -> mlattr
 
-      val bool_splat_value : mlattribute -> int
-      val int32_splat_value : mlattribute -> int
-      val uint32_splat_value : mlattribute -> int
-      val int64_splat_value : mlattribute -> int
-      val uint64_splat_value : mlattribute -> int
-      val float_splat_value : mlattribute -> float
-      val double_splat_value : mlattribute -> float
+      val bool_splat_value : mlattr -> int
+      val int32_splat_value : mlattr -> int
+      val uint32_splat_value : mlattr -> int
+      val int64_splat_value : mlattr -> int
+      val uint64_splat_value : mlattr -> int
+      val float_splat_value : mlattr -> float
+      val double_splat_value : mlattr -> float
 
       (** Returns the pos-th  (flat contiguous indexing) of a specific type contained by the given dense elements attribute. *)
-      val bool_value : mlattribute -> int -> bool
+      val bool_value : mlattr -> int -> bool
 
-      val int32_value : mlattribute -> int -> int
-      val uint32_value : mlattribute -> int -> int
-      val int64_value : mlattribute -> int -> int
-      val uint64_value : mlattribute -> int -> int
-      val float_value : mlattribute -> int -> float
-      val double_value : mlattribute -> int -> float
-      val string_value : mlattribute -> int -> string
+      val int32_value : mlattr -> int -> int
+      val uint32_value : mlattr -> int -> int
+      val int64_value : mlattr -> int -> int
+      val uint64_value : mlattr -> int -> int
+      val float_value : mlattr -> int -> float
+      val double_value : mlattr -> int -> float
+      val string_value : mlattr -> int -> string
 
       (* Returns the raw data of the given dense elements attribute. *)
-      (* val raw_data : mlattribute -> unit *)
+      (* val raw_data : mlattr -> unit *)
     end
 
     module Opaque : sig
       (* TODO: expose mldialecto the bindings and implement accessors here. *)
 
       (** Checks whether the given attribute is an opaque elements attribute. *)
-      val is_opaque : mlattribute -> bool
+      val is_opaque : mlattr -> bool
     end
 
     module Sparse : sig
       (** Checks whether the given attribute is a sparse elements attribute. *)
-      val is_sparse : mlattribute -> bool
+      val is_sparse : mlattr -> bool
 
       (** Creates a sparse elements attribute of the given shape from a list of indices and a list of associated s. Both lists are expected to be dense elements attributes with the same number of elements. The list of indices is expected to contain 64-bit integers. The attribute is created in the same context as the type. *)
-      val create : mltype -> mlattribute -> mlattribute -> mlattribute
+      val create : mltype -> mlattr -> mlattr -> mlattr
 
       (** Returns the dense elements attribute containing 64-bit integer indices of non-null elements in the given sparse elements attribute. *)
-      val indices : mlattribute -> mlattribute
+      val indices : mlattr -> mlattr
 
       (** Returns the dense elements attribute containing the non-null elements in the given sparse elements attribute. *)
-      val values : mlattribute -> mlattribute
+      val values : mlattr -> mlattr
     end
   end
 end
@@ -858,39 +858,39 @@ end
 
 module PassManager : sig
   (** Create a new top-level PassManager. *)
-  val create : mlcontext -> mlpassmanager
+  val create : mlcontext -> mlpm
 
   (** Destroy the provided PassManager. *)
-  val destroy : mlpassmanager -> unit
+  val destroy : mlpm -> unit
 
   (** Checks if a PassManager is null. *)
-  val is_null : mlpassmanager -> bool
+  val is_null : mlpm -> bool
 
   (** Cast a top-level PassManager to a generic OpPassManager. *)
-  val to_op_pass_manager : mlpassmanager -> mloppassmanager
+  val to_op_pass_manager : mlpm -> mlop_pm
 
   (** Run the provided `passManager` on the given `module`. *)
-  val run : mlpassmanager -> mlmodule -> bool
+  val run : mlpm -> mlmodule -> bool
 
   (** Nest an OpPassManager under the top-level PassManager, the nested passmanager will only run on operations matching the provided name. The returned OpPassManager will be destroyed when the parent is destroyed. To further nest more OpPassManager under the newly returned one, see `mlirOpPassManagerNest` below. *)
-  val nested_under : mlpassmanager -> string -> mloppassmanager
+  val nested_under : mlpm -> string -> mlop_pm
 
   (** Add a pass and transfer ownership to the provided top-level mlirPassManager. If the pass is not a generic operation pass or a ModulePass, a new OpPassManager is implicitly nested under the provided PassManager. *)
-  val add_owned_pass : mlpassmanager -> mlpass -> unit
+  val add_owned_pass : mlpm -> mlpass -> unit
 end
 
 module OpPassManager : sig
   (** Nest an OpPassManager under the provided OpPassManager, the nested passmanager will only run on operations matching the provided name. The returned OpPassManager will be destroyed when the parent is destroyed. *)
-  val nested_under : mloppassmanager -> string -> mloppassmanager
+  val nested_under : mlop_pm -> string -> mlop_pm
 
   (** Add a pass and transfer ownership to the provided mlirOpPassManager. If the pass is not a generic operation pass or matching the type of the provided PassManager, a new OpPassManager is implicitly nested under the provided PassManager. *)
-  val add_owned_pass : mloppassmanager -> mlpass -> unit
+  val add_owned_pass : mlop_pm -> mlpass -> unit
 
   (** Print a textual MLIR pass pipeline by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
-  val print_pass_pipeline : callback:(string -> unit) -> mloppassmanager -> unit
+  val print_pass_pipeline : callback:(string -> unit) -> mlop_pm -> unit
 
   (** Parse a textual MLIR pass pipeline and add it to the provided OpPassManager. *)
-  val parse_pass_pipeline : mloppassmanager -> string -> bool
+  val parse_pass_pipeline : mlop_pm -> string -> bool
 end
 
 module Transforms : sig
@@ -930,4 +930,4 @@ val register_all_dialects : mlcontext -> unit
 val with_context : (mlcontext -> 'a) -> 'a
 
 (** [with_pass_manager f ctx]  creates a Pass Manager [pm] for the given context [ctx], applies [f] to it, destroys it and returns the result of applying [f] *)
-val with_pass_manager : f:(mlpassmanager -> 'a) -> mlcontext -> 'a
+val with_pass_manager : f:(mlpm -> 'a) -> mlcontext -> 'a

@@ -10,13 +10,13 @@ type mlregion = Typs.Region.t structured
 type mlvalue = Typs.Value.t structured
 type mllocation = Typs.Location.t structured
 type mlmodule = Typs.Module.t structured
-type mloperation = Typs.Operation.t structured
-type mloperationstate = Typs.OperationState.t structured
-type mlattribute = Typs.Attribute.t structured
-type mlnamedattribute = Typs.NamedAttribute.t structured
+type mlop = Typs.Operation.t structured
+type mlop_state = Typs.OperationState.t structured
+type mlattr = Typs.Attribute.t structured
+type mlnamed_attr = Typs.NamedAttribute.t structured
 type mlpass = Typs.Pass.t structured
-type mlpassmanager = Typs.PassManager.t structured
-type mloppassmanager = Typs.OpPassManager.t structured
+type mlpm = Typs.PassManager.t structured
+type mlop_pm = Typs.OpPassManager.t structured
 
 module StringRef = Bindings.StringRef
 
