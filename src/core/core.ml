@@ -149,6 +149,111 @@ module IR = struct
   end
 end
 
+module AffineExpr = struct
+  type t = Typs.AffineExpr.t structured
+
+  include Bindings.AffineExpr
+
+  let print ~callback x =
+    let callback s _ = callback (StringRef.to_string s) in
+    print x callback null
+
+
+  let largest_known_divisor x = largest_known_divisor x |> Int64.to_int
+  let is_multiple_of x i = is_multiple_of x Int64.(of_int i)
+  let is_function_of_dim x i = is_function_of_dim x Intptr.(of_int i)
+
+  module Dimension = struct
+    include Bindings.AffineExpr.Dimension
+
+    let get ctx i = get ctx Intptr.(of_int i)
+    let position x = position x |> Intptr.to_int
+  end
+
+  module Symbol = struct
+    include Bindings.AffineExpr.Symbol
+
+    let get ctx i = get ctx Intptr.(of_int i)
+    let position x = position x |> Intptr.to_int
+  end
+
+  module Constant = struct
+    include Bindings.AffineExpr.Constant
+
+    let get ctx i = get ctx Int64.(of_int i)
+    let value x = value x |> Int64.to_int
+  end
+end
+
+module AffineMap = struct
+  type t = Typs.AffineMap.t structured
+
+  include Bindings.AffineMap
+
+  let get ctx i j = get ctx Intptr.(of_int i) Intptr.(of_int j)
+  let constant ctx i = constant ctx Int64.(of_int i)
+
+  let permutation ctx perm =
+    let size = List.length perm |> Intptr.of_int in
+    let perm =
+      let perm = List.map Unsigned.UInt.of_int perm in
+      CArray.(start (of_list uint perm))
+    in
+    permutation ctx size perm
+
+
+  let multi_dim_identity ctx i = multi_dim_identity ctx Intptr.(of_int i)
+  let minor_identity ctx i j = minor_identity ctx Intptr.(of_int i) (Intptr.of_int j)
+  let single_constant_result ctx = single_constant_result ctx |> Int64.to_int
+  let num_dims ctx = num_dims ctx |> Intptr.to_int
+  let num_symbols ctx = num_symbols ctx |> Intptr.to_int
+  let num_results ctx = num_results ctx |> Intptr.to_int
+  let num_inputs ctx = num_inputs ctx |> Intptr.to_int
+
+  let sub_map afm x =
+    let size = List.length x |> Intptr.of_int in
+    let x =
+      let x = List.map Intptr.of_int x in
+      CArray.(start (of_list intptr_t x))
+    in
+    sub_map afm size x
+
+
+  let major_sub_map ctx i = major_sub_map ctx (Intptr.of_int i)
+  let minor_sub_map ctx i = minor_sub_map ctx (Intptr.of_int i)
+
+  let print ~callback x =
+    let callback s _ = callback (StringRef.to_string s) in
+    print x callback null
+end
+
+module StandardDialect = struct
+  include Bindings.StandardDialect
+
+  let namespace () = namespace () |> StringRef.to_string
+end
+
+module PassManager = struct
+  include Bindings.PassManager
+
+  let run pass m = Bindings.LogicalResult.(is_success (run pass m))
+  let nested_under pm s = nested_under pm StringRef.(of_string s)
+end
+
+module OpPassManager = struct
+  include Bindings.OpPassManager
+
+  let nested_under pm s = nested_under pm StringRef.(of_string s)
+
+  let print_pass_pipeline ~callback x =
+    let callback s _ = callback (StringRef.to_string s) in
+    print_pass_pipeline x callback null
+
+
+  let parse_pass_pipeline pm s =
+    parse_pass_pipeline pm StringRef.(of_string s) |> Bindings.LogicalResult.is_success
+end
+
 module BuiltinTypes = struct
   module Integer = struct
     include Bindings.BuiltinTypes.Integer
@@ -437,111 +542,6 @@ module BuiltinAttributes = struct
       let string_value x i = string_value x Intptr.(of_int i) |> StringRef.to_string
     end
   end
-end
-
-module AffineExpr = struct
-  type t = Typs.AffineExpr.t structured
-
-  include Bindings.AffineExpr
-
-  let print ~callback x =
-    let callback s _ = callback (StringRef.to_string s) in
-    print x callback null
-
-
-  let largest_known_divisor x = largest_known_divisor x |> Int64.to_int
-  let is_multiple_of x i = is_multiple_of x Int64.(of_int i)
-  let is_function_of_dim x i = is_function_of_dim x Intptr.(of_int i)
-
-  module Dimension = struct
-    include Bindings.AffineExpr.Dimension
-
-    let get ctx i = get ctx Intptr.(of_int i)
-    let position x = position x |> Intptr.to_int
-  end
-
-  module Symbol = struct
-    include Bindings.AffineExpr.Symbol
-
-    let get ctx i = get ctx Intptr.(of_int i)
-    let position x = position x |> Intptr.to_int
-  end
-
-  module Constant = struct
-    include Bindings.AffineExpr.Constant
-
-    let get ctx i = get ctx Int64.(of_int i)
-    let value x = value x |> Int64.to_int
-  end
-end
-
-module AffineMap = struct
-  type t = Typs.AffineMap.t structured
-
-  include Bindings.AffineMap
-
-  let get ctx i j = get ctx Intptr.(of_int i) Intptr.(of_int j)
-  let constant ctx i = constant ctx Int64.(of_int i)
-
-  let permutation ctx perm =
-    let size = List.length perm |> Intptr.of_int in
-    let perm =
-      let perm = List.map Unsigned.UInt.of_int perm in
-      CArray.(start (of_list uint perm))
-    in
-    permutation ctx size perm
-
-
-  let multi_dim_identity ctx i = multi_dim_identity ctx Intptr.(of_int i)
-  let minor_identity ctx i j = minor_identity ctx Intptr.(of_int i) (Intptr.of_int j)
-  let single_constant_result ctx = single_constant_result ctx |> Int64.to_int
-  let num_dims ctx = num_dims ctx |> Intptr.to_int
-  let num_symbols ctx = num_symbols ctx |> Intptr.to_int
-  let num_results ctx = num_results ctx |> Intptr.to_int
-  let num_inputs ctx = num_inputs ctx |> Intptr.to_int
-
-  let sub_map afm x =
-    let size = List.length x |> Intptr.of_int in
-    let x =
-      let x = List.map Intptr.of_int x in
-      CArray.(start (of_list intptr_t x))
-    in
-    sub_map afm size x
-
-
-  let major_sub_map ctx i = major_sub_map ctx (Intptr.of_int i)
-  let minor_sub_map ctx i = minor_sub_map ctx (Intptr.of_int i)
-
-  let print ~callback x =
-    let callback s _ = callback (StringRef.to_string s) in
-    print x callback null
-end
-
-module StandardDialect = struct
-  include Bindings.StandardDialect
-
-  let namespace () = namespace () |> StringRef.to_string
-end
-
-module PassManager = struct
-  include Bindings.PassManager
-
-  let run pass m = Bindings.LogicalResult.(is_success (run pass m))
-  let nested_under pm s = nested_under pm StringRef.(of_string s)
-end
-
-module OpPassManager = struct
-  include Bindings.OpPassManager
-
-  let nested_under pm s = nested_under pm StringRef.(of_string s)
-
-  let print_pass_pipeline ~callback x =
-    let callback s _ = callback (StringRef.to_string s) in
-    print_pass_pipeline x callback null
-
-
-  let parse_pass_pipeline pm s =
-    parse_pass_pipeline pm StringRef.(of_string s) |> Bindings.LogicalResult.is_success
 end
 
 module Transforms = Bindings.Transforms

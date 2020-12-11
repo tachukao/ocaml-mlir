@@ -209,7 +209,187 @@ module IR : sig
   end
 end
 
-module rec BuiltinTypes : sig
+module AffineExpr : sig
+  type t
+
+  (** Gets the context that owns the affine expression. *)
+  val context : t -> mlcontext
+
+  (** Prints an affine expression by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
+  val print : callback:(string -> unit) -> t -> unit
+
+  (** Prints the affine expression to the standard error stream. *)
+  val dump : t -> unit
+
+  (** Checks whether the given affine expression is made out of only symbols and constants. *)
+  val is_symbolic_or_constant : t -> bool
+
+  (** Checks whether the given affine expression is a pure affine expression, i.e. mul, floordiv, ceildic, and mod is only allowed w.r.t constants. *)
+  val is_pure_affine : t -> bool
+
+  (** Returns the greatest known integral divisor of this affine expression. The result is always positive. *)
+  val largest_known_divisor : t -> int
+
+  (** Checks whether the given affine expression is a multiple of 'factor'. *)
+  val is_multiple_of : t -> int -> bool
+
+  (** Checks whether the given affine expression involves AffineDimExpr 'position'. *)
+  val is_function_of_dim : t -> int -> bool
+
+  module Dimension : sig
+    (** Creates an affine dimension expression with 'position' in the context. *)
+    val get : mlcontext -> int -> t
+
+    (** Returns the position of the given affine dimension expression. *)
+    val position : t -> int
+  end
+
+  module Symbol : sig
+    (** Creates an affine symbol expression with 'position' in the context. *)
+    val get : mlcontext -> int -> t
+
+    (** Returns the position of the given affine symbol expression. *)
+    val position : t -> int
+  end
+
+  module Constant : sig
+    (** Creates an affine constant expression with 'constant' in the context. *)
+    val get : mlcontext -> int -> t
+
+    (** Returns the  of the given affine constant expression. *)
+    val value : t -> int
+  end
+
+  module Add : sig
+    (** Checks whether the given affine expression is an add expression. *)
+    val is_add : t -> bool
+
+    (** Creates an affine add expression with 'lhs' and 'rhs'. *)
+    val get : t -> t -> t
+  end
+
+  module Mul : sig
+    (** Checks whether the given affine expression is an mul expression. *)
+    val is_mul : t -> bool
+
+    (** Creates an affine mul expression with 'lhs' and 'rhs'. *)
+    val get : t -> t -> t
+  end
+
+  module Mod : sig
+    (** Checks whether the given affine expression is an mod expression. *)
+    val is_mod : t -> bool
+
+    (** Creates an affine mod expression with 'lhs' and 'rhs'. *)
+    val get : t -> t -> t
+  end
+
+  module FloorDiv : sig
+    (** Checks whether the given affine expression is an floordiv expression. *)
+    val is_floor_div : t -> bool
+
+    (** Creates an affine floordiv expression with 'lhs' and 'rhs'. *)
+    val get : t -> t -> t
+  end
+
+  module CeilDiv : sig
+    (** Checks whether the given affine expression is an ceildiv expression. *)
+    val is_ceil_div : t -> bool
+
+    (** Creates an affine ceildiv expression with 'lhs' and 'rhs'. *)
+    val get : t -> t -> t
+  end
+
+  module BinaryOp : sig
+    (** Returns the left hand side affine expression of the given affine binary operation expression. *)
+    val lhs : t -> t
+
+    (** Returns the right hand side affine expression of the given affine binary operation expression. *)
+    val rhs : t -> t
+  end
+end
+
+module AffineMap : sig
+  type t
+
+  (** Gets the context that the given affine map was created with *)
+  val context : t -> mlcontext
+
+  (** Checks whether an affine map is null. *)
+  val is_null : t -> bool
+
+  (** Checks if two affine maps are equal. *)
+  val equal : t -> t -> bool
+
+  (** Prints an affine map by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
+  val print : callback:(string -> unit) -> t -> unit
+
+  (** Prints the affine map to the standard error stream. *)
+  val dump : t -> unit
+
+  (** Creates a zero result affine map with no dimensions or symbols in the context. The affine map is owned by the context. *)
+  val empty : mlcontext -> t
+
+  (** Creates a zero result affine map of the given dimensions and symbols in the context. The affine map is owned by the context. *)
+  val get : mlcontext -> int -> int -> t
+
+  (** Creates a single constant result affine map in the context. The affine map is owned by the context. *)
+  val constant : mlcontext -> int -> t
+
+  (** Creates an affine map with 'numDims' identity in the context. The affine map is owned by the context. *)
+  val multi_dim_identity : mlcontext -> int -> t
+
+  (** Creates an identity affine map on the most minor dimensions in the context. The affine map is owned by the context. The function asserts that the number of dimensions is greater or equal to the number of results. *)
+  val minor_identity : mlcontext -> int -> int -> t
+
+  (** Creates an affine map with a permutation expression and its size in the context. The permutation expression is a non-empty vector of integers. The elements of the permutation vector must be continuous from 0 and cannot be repeated (i.e. `[1,2,0]` is a valid permutation. `[2,0]` or `[1,1,2]` is an invalid invalid permutation.) The affine map is owned by the context. *)
+  val permutation : mlcontext -> int list -> t
+
+  (** Checks whether the given affine map is an identity affine map. The function asserts that the number of dimensions is greater or equal to the number of results. *)
+  val is_identity : t -> bool
+
+  (** Checks whether the given affine map is a minor identity affine map. *)
+  val is_minor_identity : t -> bool
+
+  (** Checks whether the given affine map is a empty affine map. *)
+  val is_empty : t -> bool
+
+  (** Checks whether the given affine map is a single result constant affine map. *)
+  val is_single_constant : t -> bool
+
+  (** Returns the constant result of the given affine map. The function asserts
+   * that the map has a single constant result. *)
+  val single_constant_result : t -> int
+
+  (** Returns the number of dimensions of the given affine map. *)
+  val num_dims : t -> int
+
+  (** Returns the number of symbols of the given affine map. *)
+  val num_symbols : t -> int
+
+  (** Returns the number of results of the given affine map. *)
+  val num_results : t -> int
+
+  (** Returns the number of inputs (dimensions + symbols) of the given affine map. *)
+  val num_inputs : t -> int
+
+  (** Checks whether the given affine map represents a subset of a symbol-less permutation map. *)
+  val is_projected_permutation : t -> bool
+
+  (** Checks whether the given affine map represents a symbol-less permutation map. *)
+  val is_permutation : t -> bool
+
+  (** Returns the affine map consisting of the `resultPos` subset. *)
+  val sub_map : t -> int list -> t
+
+  (** Returns the affine map consisting of the most major `numResults` results. Returns the null AffineMap if the `numResults` is equal to zero. Returns the `affineMap` if `numResults` is greater or equals to number of results of the given affine map. *)
+  val major_sub_map : t -> int -> t
+
+  (** Returns the affine map consisting of the most minor `numResults` results. Returns the null AffineMap if the `numResults` is equal to zero. Returns the `affineMap` if `numResults` is greater or equals to number of results of the given affine map. *)
+  val minor_sub_map : t -> int -> t
+end
+
+module BuiltinTypes : sig
   module Integer : sig
     (** Checks whether the given type is an integer type. *)
     val is_integer : mltype -> bool
@@ -393,7 +573,7 @@ module rec BuiltinTypes : sig
   end
 end
 
-and BuiltinAttributes : sig
+module BuiltinAttributes : sig
   module AffineMap : sig
     (** Checks whether the given attribute is an affine map attribute. *)
     val is_affine_map : mlattr -> bool
@@ -663,186 +843,6 @@ and BuiltinAttributes : sig
       val values : mlattr -> mlattr
     end
   end
-end
-
-and AffineExpr : sig
-  type t
-
-  (** Gets the context that owns the affine expression. *)
-  val context : t -> mlcontext
-
-  (** Prints an affine expression by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
-  val print : callback:(string -> unit) -> t -> unit
-
-  (** Prints the affine expression to the standard error stream. *)
-  val dump : t -> unit
-
-  (** Checks whether the given affine expression is made out of only symbols and constants. *)
-  val is_symbolic_or_constant : t -> bool
-
-  (** Checks whether the given affine expression is a pure affine expression, i.e. mul, floordiv, ceildic, and mod is only allowed w.r.t constants. *)
-  val is_pure_affine : t -> bool
-
-  (** Returns the greatest known integral divisor of this affine expression. The result is always positive. *)
-  val largest_known_divisor : t -> int
-
-  (** Checks whether the given affine expression is a multiple of 'factor'. *)
-  val is_multiple_of : t -> int -> bool
-
-  (** Checks whether the given affine expression involves AffineDimExpr 'position'. *)
-  val is_function_of_dim : t -> int -> bool
-
-  module Dimension : sig
-    (** Creates an affine dimension expression with 'position' in the context. *)
-    val get : mlcontext -> int -> t
-
-    (** Returns the position of the given affine dimension expression. *)
-    val position : t -> int
-  end
-
-  module Symbol : sig
-    (** Creates an affine symbol expression with 'position' in the context. *)
-    val get : mlcontext -> int -> t
-
-    (** Returns the position of the given affine symbol expression. *)
-    val position : t -> int
-  end
-
-  module Constant : sig
-    (** Creates an affine constant expression with 'constant' in the context. *)
-    val get : mlcontext -> int -> t
-
-    (** Returns the  of the given affine constant expression. *)
-    val value : t -> int
-  end
-
-  module Add : sig
-    (** Checks whether the given affine expression is an add expression. *)
-    val is_add : t -> bool
-
-    (** Creates an affine add expression with 'lhs' and 'rhs'. *)
-    val get : t -> t -> t
-  end
-
-  module Mul : sig
-    (** Checks whether the given affine expression is an mul expression. *)
-    val is_mul : t -> bool
-
-    (** Creates an affine mul expression with 'lhs' and 'rhs'. *)
-    val get : t -> t -> t
-  end
-
-  module Mod : sig
-    (** Checks whether the given affine expression is an mod expression. *)
-    val is_mod : t -> bool
-
-    (** Creates an affine mod expression with 'lhs' and 'rhs'. *)
-    val get : t -> t -> t
-  end
-
-  module FloorDiv : sig
-    (** Checks whether the given affine expression is an floordiv expression. *)
-    val is_floor_div : t -> bool
-
-    (** Creates an affine floordiv expression with 'lhs' and 'rhs'. *)
-    val get : t -> t -> t
-  end
-
-  module CeilDiv : sig
-    (** Checks whether the given affine expression is an ceildiv expression. *)
-    val is_ceil_div : t -> bool
-
-    (** Creates an affine ceildiv expression with 'lhs' and 'rhs'. *)
-    val get : t -> t -> t
-  end
-
-  module BinaryOp : sig
-    (** Returns the left hand side affine expression of the given affine binary operation expression. *)
-    val lhs : t -> t
-
-    (** Returns the right hand side affine expression of the given affine binary operation expression. *)
-    val rhs : t -> t
-  end
-end
-
-and AffineMap : sig
-  type t
-
-  (** Gets the context that the given affine map was created with *)
-  val context : t -> mlcontext
-
-  (** Checks whether an affine map is null. *)
-  val is_null : t -> bool
-
-  (** Checks if two affine maps are equal. *)
-  val equal : t -> t -> bool
-
-  (** Prints an affine map by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
-  val print : callback:(string -> unit) -> t -> unit
-
-  (** Prints the affine map to the standard error stream. *)
-  val dump : t -> unit
-
-  (** Creates a zero result affine map with no dimensions or symbols in the context. The affine map is owned by the context. *)
-  val empty : mlcontext -> t
-
-  (** Creates a zero result affine map of the given dimensions and symbols in the context. The affine map is owned by the context. *)
-  val get : mlcontext -> int -> int -> t
-
-  (** Creates a single constant result affine map in the context. The affine map is owned by the context. *)
-  val constant : mlcontext -> int -> t
-
-  (** Creates an affine map with 'numDims' identity in the context. The affine map is owned by the context. *)
-  val multi_dim_identity : mlcontext -> int -> t
-
-  (** Creates an identity affine map on the most minor dimensions in the context. The affine map is owned by the context. The function asserts that the number of dimensions is greater or equal to the number of results. *)
-  val minor_identity : mlcontext -> int -> int -> t
-
-  (** Creates an affine map with a permutation expression and its size in the context. The permutation expression is a non-empty vector of integers. The elements of the permutation vector must be continuous from 0 and cannot be repeated (i.e. `[1,2,0]` is a valid permutation. `[2,0]` or `[1,1,2]` is an invalid invalid permutation.) The affine map is owned by the context. *)
-  val permutation : mlcontext -> int list -> t
-
-  (** Checks whether the given affine map is an identity affine map. The function asserts that the number of dimensions is greater or equal to the number of results. *)
-  val is_identity : t -> bool
-
-  (** Checks whether the given affine map is a minor identity affine map. *)
-  val is_minor_identity : t -> bool
-
-  (** Checks whether the given affine map is a empty affine map. *)
-  val is_empty : t -> bool
-
-  (** Checks whether the given affine map is a single result constant affine map. *)
-  val is_single_constant : t -> bool
-
-  (** Returns the constant result of the given affine map. The function asserts
-   * that the map has a single constant result. *)
-  val single_constant_result : t -> int
-
-  (** Returns the number of dimensions of the given affine map. *)
-  val num_dims : t -> int
-
-  (** Returns the number of symbols of the given affine map. *)
-  val num_symbols : t -> int
-
-  (** Returns the number of results of the given affine map. *)
-  val num_results : t -> int
-
-  (** Returns the number of inputs (dimensions + symbols) of the given affine map. *)
-  val num_inputs : t -> int
-
-  (** Checks whether the given affine map represents a subset of a symbol-less permutation map. *)
-  val is_projected_permutation : t -> bool
-
-  (** Checks whether the given affine map represents a symbol-less permutation map. *)
-  val is_permutation : t -> bool
-
-  (** Returns the affine map consisting of the `resultPos` subset. *)
-  val sub_map : t -> int list -> t
-
-  (** Returns the affine map consisting of the most major `numResults` results. Returns the null AffineMap if the `numResults` is equal to zero. Returns the `affineMap` if `numResults` is greater or equals to number of results of the given affine map. *)
-  val major_sub_map : t -> int -> t
-
-  (** Returns the affine map consisting of the most minor `numResults` results. Returns the null AffineMap if the `numResults` is equal to zero. Returns the `affineMap` if `numResults` is greater or equals to number of results of the given affine map. *)
-  val minor_sub_map : t -> int -> t
 end
 
 module StandardDialect : sig
