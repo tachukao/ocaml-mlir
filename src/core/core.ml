@@ -491,6 +491,16 @@ module AffineMap = struct
 
   let get ctx i j = get ctx Intptr.(of_int i) Intptr.(of_int j)
   let constant ctx i = constant ctx Int64.(of_int i)
+
+  let permutation ctx perm =
+    let size = List.length perm |> Intptr.of_int in
+    let perm =
+      let perm = List.map Unsigned.UInt.of_int perm in
+      CArray.(start (of_list uint perm))
+    in
+    permutation ctx size perm
+
+
   let multi_dim_identity ctx i = multi_dim_identity ctx Intptr.(of_int i)
   let minor_identity ctx i j = minor_identity ctx Intptr.(of_int i) (Intptr.of_int j)
   let single_constant_result ctx = single_constant_result ctx |> Int64.to_int
@@ -498,6 +508,16 @@ module AffineMap = struct
   let num_symbols ctx = num_symbols ctx |> Intptr.to_int
   let num_results ctx = num_results ctx |> Intptr.to_int
   let num_inputs ctx = num_inputs ctx |> Intptr.to_int
+
+  let sub_map afm x =
+    let size = List.length x |> Intptr.of_int in
+    let x =
+      let x = List.map Intptr.of_int x in
+      CArray.(start (of_list intptr_t x))
+    in
+    sub_map afm size x
+
+
   let major_sub_map ctx i = major_sub_map ctx (Intptr.of_int i)
   let minor_sub_map ctx i = minor_sub_map ctx (Intptr.of_int i)
 
@@ -509,7 +529,7 @@ end
 module StandardDialect = struct
   include Bindings.StandardDialect
 
-  let namespace () = (namespace ()) |> StringRef.to_string
+  let namespace () = namespace () |> StringRef.to_string
 end
 
 module Pass = struct
@@ -533,7 +553,7 @@ module OpPassManager = struct
   let nested_under pm s = nested_under pm StringRef.(of_string s)
 
   let print_pass_pipeline ~callback x =
-    let callback s _ = callback (StringRef.to_string s ) in
+    let callback s _ = callback (StringRef.to_string s) in
     print_pass_pipeline x callback null
 
 

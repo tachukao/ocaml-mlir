@@ -822,8 +822,7 @@ and AffineMap : sig
   val minor_identity : Context.t -> int -> int -> t
 
   (** Creates an affine map with a permutation expression and its size in the context. The permutation expression is a non-empty vector of integers. The elements of the permutation vector must be continuous from 0 and cannot be repeated (i.e. `[1,2,0]` is a valid permutation. `[2,0]` or `[1,1,2]` is an invalid invalid permutation.) The affine map is owned by the context. *)
-
-  (* val permutation : Context.t -> int array -> t *)
+  val permutation : Context.t -> int list -> t
 
   (** Checks whether the given affine map is an identity affine map. The function asserts that the number of dimensions is greater or equal to the number of results. *)
   val is_identity : t -> bool
@@ -860,8 +859,7 @@ and AffineMap : sig
   val is_permutation : t -> bool
 
   (** Returns the affine map consisting of the `resultPos` subset. *)
-
-  (* val sub_map : t -> int array -> t *)
+  val sub_map : t -> int list -> t
 
   (** Returns the affine map consisting of the most major `numResults` results. Returns the null AffineMap if the `numResults` is equal to zero. Returns the `affineMap` if `numResults` is greater or equals to number of results of the given affine map. *)
   val major_sub_map : t -> int -> t

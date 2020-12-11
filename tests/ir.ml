@@ -293,7 +293,99 @@ let print_builtin_attributes ctx =
   Attribute.dump str
 
 
-let print_affine_map ctx = ignore ctx
+let print_affine_map ctx =
+  let empty = AffineMap.empty ctx in
+  let affine_map = AffineMap.get ctx 3 2 in
+  let const = AffineMap.constant ctx 2 in
+  let multi_dim_identity = AffineMap.multi_dim_identity ctx 3 in
+  let minor_identity = AffineMap.minor_identity ctx 3 2 in
+  let perm = [ 1; 2; 0 ] in
+  let permutation = AffineMap.permutation ctx perm in
+  Printf.printf "@affineMap\n%!";
+  AffineMap.dump empty;
+  AffineMap.dump affine_map;
+  AffineMap.dump const;
+  AffineMap.dump multi_dim_identity;
+  AffineMap.dump minor_identity;
+  AffineMap.dump permutation;
+  (* is identity *)
+  assert (AffineMap.is_identity empty);
+  assert (not (AffineMap.is_identity affine_map));
+  assert (not (AffineMap.is_identity const));
+  assert (AffineMap.is_identity multi_dim_identity);
+  assert (not (AffineMap.is_identity minor_identity));
+  assert (not (AffineMap.is_identity permutation));
+  (* is minor identity*)
+  assert (AffineMap.is_minor_identity empty);
+  assert (not (AffineMap.is_minor_identity affine_map));
+  assert (AffineMap.is_minor_identity multi_dim_identity);
+  assert (AffineMap.is_minor_identity minor_identity);
+  assert (not (AffineMap.is_minor_identity permutation));
+  (* is empty *)
+  assert (AffineMap.is_empty empty);
+  assert (not (AffineMap.is_empty affine_map));
+  assert (not (AffineMap.is_identity const));
+  assert (not (AffineMap.is_empty multi_dim_identity));
+  assert (not (AffineMap.is_empty minor_identity));
+  assert (not (AffineMap.is_empty permutation));
+  (* is single constant *)
+  assert (not (AffineMap.is_single_constant empty));
+  assert (not (AffineMap.is_single_constant affine_map));
+  assert (AffineMap.is_single_constant const);
+  assert (not (AffineMap.is_single_constant multi_dim_identity));
+  assert (not (AffineMap.is_single_constant minor_identity));
+  assert (not (AffineMap.is_single_constant permutation));
+  (* get const reusult *)
+  assert (AffineMap.single_constant_result const = 2);
+  (* get num dims *)
+  assert (AffineMap.num_dims empty = 0);
+  assert (AffineMap.num_dims affine_map = 3);
+  assert (AffineMap.num_dims const = 0);
+  assert (AffineMap.num_dims multi_dim_identity = 3);
+  assert (AffineMap.num_dims minor_identity = 3);
+  assert (AffineMap.num_dims permutation = 3);
+  (* get num symbols *)
+  assert (AffineMap.num_symbols empty = 0);
+  assert (AffineMap.num_symbols affine_map = 2);
+  assert (AffineMap.num_symbols const = 0);
+  assert (AffineMap.num_symbols multi_dim_identity = 0);
+  assert (AffineMap.num_symbols minor_identity = 0);
+  assert (AffineMap.num_symbols permutation = 0);
+  (* get num results *)
+  assert (AffineMap.num_results empty = 0);
+  assert (AffineMap.num_results affine_map = 0);
+  assert (AffineMap.num_results const = 1);
+  assert (AffineMap.num_results multi_dim_identity = 3);
+  assert (AffineMap.num_results minor_identity = 2);
+  assert (AffineMap.num_results permutation = 3);
+  (* get num inputs *)
+  assert (AffineMap.num_inputs empty = 0);
+  assert (AffineMap.num_inputs affine_map = 5);
+  assert (AffineMap.num_inputs const = 0);
+  assert (AffineMap.num_inputs multi_dim_identity = 3);
+  assert (AffineMap.num_inputs minor_identity = 3);
+  assert (AffineMap.num_inputs permutation = 3);
+  (* is projected permutation *)
+  assert (AffineMap.is_projected_permutation empty);
+  assert (not (AffineMap.is_projected_permutation affine_map));
+  assert (not (AffineMap.is_projected_permutation const));
+  assert (AffineMap.is_projected_permutation multi_dim_identity);
+  assert (AffineMap.is_projected_permutation minor_identity);
+  assert (AffineMap.is_projected_permutation permutation);
+  (* is permutation *)
+  assert (AffineMap.is_permutation empty);
+  assert (not (AffineMap.is_permutation affine_map));
+  assert (not (AffineMap.is_permutation const));
+  assert (AffineMap.is_permutation multi_dim_identity);
+  assert (not (AffineMap.is_permutation minor_identity));
+  assert (AffineMap.is_permutation permutation);
+  let sub_map = AffineMap.sub_map multi_dim_identity [ 1 ] in
+  let major_sub_map = AffineMap.major_sub_map multi_dim_identity 1 in
+  let minor_sub_map = AffineMap.minor_sub_map multi_dim_identity 1 in
+  AffineMap.dump sub_map;
+  AffineMap.dump major_sub_map;
+  AffineMap.dump minor_sub_map
+
 
 let print_affine_expr ctx =
   let dim = AffineExpr.Dimension.get ctx 5 in
@@ -461,7 +553,18 @@ let%expect_test _ =
 
 let%expect_test _ =
   with_context print_affine_map;
-  [%expect {|
+  [%expect
+    {|
+  @affineMap
+  () -> ()
+  (d0, d1, d2)[s0, s1] -> ()
+  () -> (2)
+  (d0, d1, d2) -> (d0, d1, d2)
+  (d0, d1, d2) -> (d1, d2)
+  (d0, d1, d2) -> (d1, d2, d0)
+  (d0, d1, d2) -> (d1)
+  (d0, d1, d2) -> (d0)
+  (d0, d1, d2) -> (d2)
   |}]
 
 let%expect_test _ =
