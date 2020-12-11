@@ -290,7 +290,204 @@ let print_builtin_attributes ctx =
   let str_value = BuiltinAttributes.String.value str in
   assert (String.length str_value = 2);
   assert (str_value = data);
-  Attribute.dump str
+  Attribute.dump str;
+  (* flat symbol *)
+  let flat_symbol_ref = BuiltinAttributes.FlatSymbolRef.get ctx "fgh" in
+  assert (BuiltinAttributes.FlatSymbolRef.(is_flat_symbol_ref flat_symbol_ref));
+  let flat_symbol_ref_value = BuiltinAttributes.FlatSymbolRef.value flat_symbol_ref in
+  assert (String.length flat_symbol_ref_value = 3);
+  assert (flat_symbol_ref_value = "fgh");
+  Attribute.dump flat_symbol_ref;
+  (* symbols *)
+  let symbols = [ flat_symbol_ref; flat_symbol_ref ] in
+  let symbol_ref = BuiltinAttributes.SymbolRef.get ctx "ij" symbols in
+  assert (BuiltinAttributes.SymbolRef.is_symbol_ref symbol_ref);
+  assert (BuiltinAttributes.SymbolRef.num_nested_refs symbol_ref = 2);
+  assert (
+    Attribute.equal BuiltinAttributes.SymbolRef.(nested_ref symbol_ref 0) flat_symbol_ref
+  );
+  assert (
+    Attribute.equal BuiltinAttributes.SymbolRef.(nested_ref symbol_ref 1) flat_symbol_ref
+  );
+  let symbol_ref_leaf = BuiltinAttributes.SymbolRef.leaf_ref symbol_ref in
+  let symbol_ref_root = BuiltinAttributes.SymbolRef.root_ref symbol_ref in
+  assert (String.length symbol_ref_leaf = 3);
+  assert (String.length symbol_ref_root = 2);
+  assert (symbol_ref_leaf = "fgh");
+  assert (symbol_ref_root = "ij");
+  Attribute.dump symbol_ref;
+  (* type *)
+  let typ = BuiltinAttributes.Type.get BuiltinTypes.(Float.f32 ctx) in
+  assert (BuiltinAttributes.Type.is_type typ);
+  assert (Type.equal BuiltinTypes.(Float.f32 ctx) BuiltinAttributes.Type.(value typ));
+  Attribute.dump typ;
+  (* unit *)
+  let u = BuiltinAttributes.Unit.get ctx in
+  assert (BuiltinAttributes.Unit.is_unit u);
+  Attribute.dump u;
+  let shp = [| 1; 2 |] in
+  let bools = [ 0; 1 ] in
+  let uints32 = [ 0; 1 ] in
+  let ints32 = [ 0; 1 ] in
+  let uints64 = [ 0; 1 ] in
+  let ints64 = [ 0; 1 ] in
+  let floats = [ 0.; 1. ] in
+  let doubles = [ 0.; 1. ] in
+  let bool_elements =
+    BuiltinAttributes.Elements.Dense.bool_get
+      BuiltinTypes.(Tensor.ranked shp Integer.(get ctx 1))
+      bools
+  in
+  let uint32_elements =
+    BuiltinAttributes.Elements.Dense.uint32_get
+      BuiltinTypes.(Tensor.ranked shp Integer.(unsigned ctx 32))
+      uints32
+  in
+  let int32_elements =
+    BuiltinAttributes.Elements.Dense.int32_get
+      BuiltinTypes.(Tensor.ranked shp Integer.(get ctx 32))
+      ints32
+  in
+  let uint64_elements =
+    BuiltinAttributes.Elements.Dense.uint64_get
+      BuiltinTypes.(Tensor.ranked shp Integer.(unsigned ctx 64))
+      uints64
+  in
+  let int64_elements =
+    BuiltinAttributes.Elements.Dense.int64_get
+      BuiltinTypes.(Tensor.ranked shp Integer.(get ctx 64))
+      ints64
+  in
+  let float_elements =
+    BuiltinAttributes.Elements.Dense.float_get
+      BuiltinTypes.(Tensor.ranked shp Float.(f32 ctx))
+      floats
+  in
+  let double_elements =
+    BuiltinAttributes.Elements.Dense.double_get
+      BuiltinTypes.(Tensor.ranked shp Float.(f64 ctx))
+      doubles
+  in
+  (* is dense *)
+  assert (BuiltinAttributes.Elements.Dense.is_dense bool_elements);
+  assert (BuiltinAttributes.Elements.Dense.is_dense uint32_elements);
+  assert (BuiltinAttributes.Elements.Dense.is_dense int32_elements);
+  assert (BuiltinAttributes.Elements.Dense.is_dense uint64_elements);
+  assert (BuiltinAttributes.Elements.Dense.is_dense int64_elements);
+  assert (BuiltinAttributes.Elements.Dense.is_dense float_elements);
+  assert (BuiltinAttributes.Elements.Dense.is_dense double_elements);
+  (* Get value *)
+  assert (BuiltinAttributes.Elements.Dense.(bool_value bool_elements 1) = true);
+  assert (BuiltinAttributes.Elements.Dense.(uint32_value uint32_elements 1) = 1);
+  assert (BuiltinAttributes.Elements.Dense.(int32_value int32_elements 1) = 1);
+  assert (BuiltinAttributes.Elements.Dense.(uint64_value uint64_elements 1) = 1);
+  assert (BuiltinAttributes.Elements.Dense.(int64_value int64_elements 1) = 1);
+  assert (
+    Float.(abs (BuiltinAttributes.Elements.Dense.(float_value float_elements 1) -. 1.))
+    < 1E-6);
+  assert (
+    Float.(abs (BuiltinAttributes.Elements.Dense.(double_value double_elements 1) -. 1.))
+    < 1E-6);
+  (* dump *)
+  Attribute.dump bool_elements;
+  Attribute.dump uint32_elements;
+  Attribute.dump int32_elements;
+  Attribute.dump uint64_elements;
+  Attribute.dump int64_elements;
+  Attribute.dump float_elements;
+  Attribute.dump double_elements;
+  (* SPLAT *)
+  let bool_elements =
+    BuiltinAttributes.Elements.Dense.bool_splat_get
+      BuiltinTypes.(Tensor.ranked shp Integer.(get ctx 1))
+      true
+  in
+  let uint32_elements =
+    BuiltinAttributes.Elements.Dense.uint32_splat_get
+      BuiltinTypes.(Tensor.ranked shp Integer.(unsigned ctx 32))
+      1
+  in
+  let int32_elements =
+    BuiltinAttributes.Elements.Dense.int32_splat_get
+      BuiltinTypes.(Tensor.ranked shp Integer.(get ctx 32))
+      1
+  in
+  let uint64_elements =
+    BuiltinAttributes.Elements.Dense.uint64_splat_get
+      BuiltinTypes.(Tensor.ranked shp Integer.(unsigned ctx 64))
+      1
+  in
+  let int64_elements =
+    BuiltinAttributes.Elements.Dense.int64_splat_get
+      BuiltinTypes.(Tensor.ranked shp Integer.(get ctx 64))
+      1
+  in
+  let float_elements =
+    BuiltinAttributes.Elements.Dense.float_splat_get
+      BuiltinTypes.(Tensor.ranked shp Float.(f32 ctx))
+      1.
+  in
+  let double_elements =
+    BuiltinAttributes.Elements.Dense.double_splat_get
+      BuiltinTypes.(Tensor.ranked shp Float.(f64 ctx))
+      1.
+  in
+  (* is dense *)
+  assert (BuiltinAttributes.Elements.Dense.is_dense bool_elements);
+  assert (BuiltinAttributes.Elements.Dense.is_dense uint32_elements);
+  assert (BuiltinAttributes.Elements.Dense.is_dense int32_elements);
+  assert (BuiltinAttributes.Elements.Dense.is_dense uint64_elements);
+  assert (BuiltinAttributes.Elements.Dense.is_dense int64_elements);
+  assert (BuiltinAttributes.Elements.Dense.is_dense float_elements);
+  assert (BuiltinAttributes.Elements.Dense.is_dense double_elements);
+  (* is splat *)
+  assert (BuiltinAttributes.Elements.Dense.is_splat bool_elements);
+  assert (BuiltinAttributes.Elements.Dense.is_splat uint32_elements);
+  assert (BuiltinAttributes.Elements.Dense.is_splat int32_elements);
+  assert (BuiltinAttributes.Elements.Dense.is_splat uint64_elements);
+  assert (BuiltinAttributes.Elements.Dense.is_splat int64_elements);
+  assert (BuiltinAttributes.Elements.Dense.is_splat float_elements);
+  assert (BuiltinAttributes.Elements.Dense.is_splat double_elements);
+  (* Get value *)
+  assert (BuiltinAttributes.Elements.Dense.(bool_splat_value bool_elements) = 1);
+  assert (BuiltinAttributes.Elements.Dense.(uint32_splat_value uint32_elements) = 1);
+  assert (BuiltinAttributes.Elements.Dense.(int32_splat_value int32_elements) = 1);
+  assert (BuiltinAttributes.Elements.Dense.(uint64_splat_value uint64_elements) = 1);
+  assert (BuiltinAttributes.Elements.Dense.(int64_splat_value int64_elements) = 1);
+  assert (
+    Float.(
+      abs (BuiltinAttributes.Elements.Dense.(float_splat_value float_elements) -. 1.))
+    < 1E-6);
+  assert (
+    Float.(
+      abs (BuiltinAttributes.Elements.Dense.(double_splat_value double_elements) -. 1.))
+    < 1E-6);
+  (* dump *)
+  Attribute.dump bool_elements;
+  Attribute.dump uint32_elements;
+  Attribute.dump int32_elements;
+  Attribute.dump uint64_elements;
+  Attribute.dump int64_elements;
+  Attribute.dump float_elements;
+  Attribute.dump double_elements;
+  (* sparse *)
+  let indices =
+    BuiltinAttributes.Elements.Dense.int64_get
+      BuiltinTypes.(Tensor.ranked [| 2 |] Integer.(get ctx 64))
+      [ 4; 7 ]
+  in
+  let values =
+    BuiltinAttributes.Elements.Dense.float_get
+      BuiltinTypes.(Tensor.ranked [| 2 |] Float.(f32 ctx))
+      floats
+  in
+  let sparse =
+    BuiltinAttributes.Elements.Sparse.create
+      BuiltinTypes.(Tensor.ranked [| 2 |] Float.(f32 ctx))
+      indices
+      values
+  in
+  Attribute.dump sparse
 
 
 let print_affine_map ctx =
@@ -549,6 +746,25 @@ let%expect_test _ =
   true 
   #std.abc
   "de"
+  @fgh
+  @ij::@fgh::@fgh
+  f32
+  unit
+  dense<[[false, true]]> : tensor<1x2xi1>
+  dense<[[0, 1]]> : tensor<1x2xui32>
+  dense<[[0, 1]]> : tensor<1x2xi32>
+  dense<[[0, 1]]> : tensor<1x2xui64>
+  dense<[[0, 1]]> : tensor<1x2xi64>
+  dense<[[0.000000e+00, 1.000000e+00]]> : tensor<1x2xf32>
+  dense<[[0.000000e+00, 1.000000e+00]]> : tensor<1x2xf64>
+  dense<true> : tensor<1x2xi1>
+  dense<1> : tensor<1x2xui32>
+  dense<1> : tensor<1x2xi32>
+  dense<1> : tensor<1x2xui64>
+  dense<1> : tensor<1x2xi64>
+  dense<1.000000e+00> : tensor<1x2xf32>
+  dense<1.000000e+00> : tensor<1x2xf64>
+  sparse<[4, 7], [0.000000e+00, 1.000000e+00]> : tensor<2xf32>
   |}]
 
 let%expect_test _ =
