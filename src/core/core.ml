@@ -297,6 +297,10 @@ module AffineMap = struct
   let num_inputs ctx = num_inputs ctx |> Intptr.to_int
   let major_sub_map ctx i = major_sub_map ctx (Intptr.of_int i)
   let minor_sub_map ctx i = minor_sub_map ctx (Intptr.of_int i)
+
+  let print ~callback x =
+    let callback s _ = callback (getf s Typs.StringRef.data) in
+    print x callback null
 end
 
 module StandardDialect = struct
@@ -325,6 +329,11 @@ module OpPassManager = struct
 
   let nested_under pm s = nested_under pm Bindings.StringRef.(of_string s)
 
+  let print_pass_pipeline ~callback x =
+    let callback s _ = callback (getf s Typs.StringRef.data) in
+    print_pass_pipeline x callback null
+
+
   let parse_pass_pipeline pm s =
     parse_pass_pipeline pm Bindings.StringRef.(of_string s)
     |> Bindings.LogicalResult.is_success
@@ -338,4 +347,11 @@ let with_context f =
   let ctx = IR.Context.create () in
   let result = f ctx in
   IR.Context.destroy ctx;
+  result
+
+
+let with_pass_manager ~f ctx =
+  let pm = PassManager.create ctx in
+  let result = f pm in
+  PassManager.destroy pm;
   result

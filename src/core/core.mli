@@ -402,8 +402,7 @@ and AffineMap : sig
   val equal : t -> t -> bool
 
   (** Prints an affine map by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
-
-  (* val print : callback:(string -> 'a -> unit) -> 'a -> t -> unit *)
+  val print : callback:(string -> unit) -> t -> unit
 
   (** Prints the affine map to the standard error stream. *)
   val dump : t -> unit
@@ -526,8 +525,7 @@ and OpPassManager : sig
   val add_owned_pass : t -> Pass.t -> unit
 
   (** Print a textual MLIR pass pipeline by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
-
-  (* val print_pass_pipeline : t -> (string -> 'a -> unit) -> 'a -> unit *)
+  val print_pass_pipeline : callback:(string -> unit) -> t -> unit
 
   (** Parse a textual MLIR pass pipeline and add it to the provided OpPassManager. *)
   val parse_pass_pipeline : t -> string -> bool
@@ -568,3 +566,6 @@ val register_all_dialects : IR.Context.t -> unit
 
 (** [with_context f]  creates a context [ctx], applies [f] to it, destroys it and returns the result of applying [f] *)
 val with_context : (IR.Context.t -> 'a) -> 'a
+
+(** [with_pass_manager f ctx]  creates a Pass Manager [pm] for the given context [ctx], applies [f] to it, destroys it and returns the result of applying [f] *)
+val with_pass_manager : f:(PassManager.t -> 'a) -> IR.Context.t -> 'a
