@@ -41,12 +41,29 @@ module IR = struct
     let parse ctx s =
       let s = StringRef.of_string s in
       parse ctx s
+
+
+    let print ~callback x =
+      let callback s _ = callback (StringRef.to_string s) in
+      print x callback null
   end
 
   module Location = struct
     include Bindings.Location
 
+    let file_line_col_get ctx s i j =
+      file_line_col_get
+        ctx
+        Bindings.StringRef.(of_string s)
+        Unsigned.UInt.(of_int i)
+        Unsigned.UInt.(of_int j)
+
+
     let unknown = unknown
+
+    let print ~callback x =
+      let callback s _ = callback (StringRef.to_string s) in
+      print x callback null
   end
 
   module Attribute = struct

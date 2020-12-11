@@ -59,11 +59,20 @@ module IR : sig
   end
 
   module Type : sig
+    (** Parses a type. The type is owned by the context. *)
+    val parse : mlcontext -> string -> mltype
+
+    (** Gets the context that a type was created with. *)
+    val context : mltype -> mlcontext
+
+    (** Checks whether a type is null. *)
+    val is_null : mltype -> bool
+
     (** Checks if two types are equal. *)
     val equal : mltype -> mltype -> bool
 
-    (** Parses a type. The type is owned by the context. *)
-    val parse : mlcontext -> string -> mltype
+    (** Prints a location by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
+    val print : callback:(string -> unit) -> mltype -> unit
 
     (** Prints the type to the standard error stream. *)
     val dump : mltype -> unit
@@ -90,8 +99,23 @@ module IR : sig
   end
 
   module Location : sig
+    (** Creates an File/Line/Column location owned by the given context. *)
+    val file_line_col_get : mlcontext -> string -> int -> int -> mllocation
+
     (** Creates a location with unknown position owned by the given context. *)
     val unknown : mlcontext -> mllocation
+
+    (** Gets the context that a location was created with. *)
+    val context : mllocation -> mlcontext
+
+    (** Checks if the location is null. *)
+    val is_null : mllocation -> bool
+
+    (** Checks if two locations are equal. *)
+    val equal : mllocation -> mllocation -> bool
+
+    (** Prints a location by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
+    val print : callback:(string -> unit) -> mllocation -> unit
   end
 
   module Attribute : sig
