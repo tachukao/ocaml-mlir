@@ -253,7 +253,17 @@ let print_builtin_types ctx =
   Printf.printf "\n%!"
 
 
-let print_builtin_attributes ctx = ignore ctx
+let print_builtin_attributes ctx =
+  let floating = BuiltinAttributes.Float.get ctx BuiltinTypes.Float.(f64 ctx) 2. in
+  assert (BuiltinAttributes.Float.(is_float floating));
+  assert (Float.abs (BuiltinAttributes.Float.(value floating) -. 2.) < 1E-6);
+  Printf.printf "@attrs\n%!";
+  Attribute.dump floating;
+  let floating_type = Attribute.get_type floating in
+  Type.dump floating_type;
+  ignore ctx
+
+
 let print_affine_map ctx = ignore ctx
 let print_affine_expr ctx = ignore ctx
 
@@ -342,6 +352,9 @@ let%expect_test _ =
 let%expect_test _ =
   with_context print_builtin_attributes;
   [%expect {|
+  @attrs
+  2.000000e+00 : f64
+  f64
   |}]
 
 let%expect_test _ =

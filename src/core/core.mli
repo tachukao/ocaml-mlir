@@ -98,6 +98,24 @@ module IR : sig
     (** Parses an attribute. The attribute is owned by the context. *)
     val parse : Context.t -> string -> t
 
+    (** Gets the context that an attribute was created with. *)
+    val context : t -> Context.t
+
+    (** Gets the type of this attribute. *)
+    val get_type : t -> Type.t
+
+    (** Checks whether an attribute is null. *)
+    val is_null : t -> bool
+
+    (** Checks if two attributes are equal. *)
+    val equal : t -> t -> bool
+
+    (** Prints an attribute by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
+    val print : callback:(string -> unit) -> t -> unit
+
+    (** Prints the attribute to the standard error stream. *)
+    val dump : t -> unit
+
     (** Associates an attribute with the name. Takes ownership of neither. *)
     val name : string -> t -> NamedAttribute.t
   end

@@ -56,6 +56,11 @@ module IR = struct
       parse ctx s
 
 
+    let print ~callback x =
+      let callback s _ = callback (getf s Typs.StringRef.data) in
+      print x callback null
+
+
     let name s attr =
       let s = Bindings.StringRef.of_string s in
       name s attr
