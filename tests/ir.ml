@@ -1,3 +1,4 @@
+(* Recreating CAPI test: ir.c *)
 open Core
 open IR
 
@@ -254,6 +255,7 @@ let print_builtin_types ctx =
 
 
 let print_builtin_attributes ctx =
+  (* float *)
   let floating = BuiltinAttributes.Float.get ctx BuiltinTypes.Float.(f64 ctx) 2. in
   assert (BuiltinAttributes.Float.(is_float floating));
   assert (Float.abs (BuiltinAttributes.Float.(value floating) -. 2.) < 1E-6);
@@ -261,6 +263,26 @@ let print_builtin_attributes ctx =
   Attribute.dump floating;
   let floating_type = Attribute.get_type floating in
   Type.dump floating_type;
+  print_newline ();
+  (* integer *)
+  let integer = BuiltinAttributes.Integer.get BuiltinTypes.Integer.(get ctx 32) 42 in
+  assert (BuiltinAttributes.Integer.(is_integer integer));
+  assert (BuiltinAttributes.Integer.(value integer) = 42);
+  Attribute.dump integer;
+  (* bool *)
+  let boolean = BuiltinAttributes.Bool.get ctx 1 in
+  assert (BuiltinAttributes.Bool.(is_bool boolean));
+  assert (BuiltinAttributes.Bool.(value boolean));
+  Attribute.dump boolean;
+  (* opaque *)
+  let data = "abc" in
+  let opaque = BuiltinAttributes.Opaque.get ctx "std" data BuiltinTypes.None.(get ctx) in
+  assert (BuiltinAttributes.Opaque.(is_opaque opaque));
+  assert (BuiltinAttributes.Opaque.(namespace opaque) = "std");
+  let opaque_data = BuiltinAttributes.Opaque.data opaque in
+  assert (String.length opaque_data = 3);
+  assert (String.length opaque_data = String.length data);
+  Attribute.dump opaque;
   ignore ctx
 
 
@@ -355,6 +377,9 @@ let%expect_test _ =
   @attrs
   2.000000e+00 : f64
   f64
+  42 : i32
+  true 
+  #std.abc
   |}]
 
 let%expect_test _ =

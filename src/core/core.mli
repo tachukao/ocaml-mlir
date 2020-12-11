@@ -501,7 +501,7 @@ and BuiltinAttributes : sig
     val is_opaque : Attribute.t -> bool
 
     (** Creates an opaque attribute in the given context associated with the dialect identified by its namespace. The attribute contains opaque byte data of the specified length (data need not be null-terminated). *)
-    val get : Context.t -> string -> int -> string -> Type.t -> Attribute.t
+    val get : Context.t -> string -> string -> Type.t -> Attribute.t
 
     (** Returns the namespace of the dialect with which the given opaque attribute is associated. The namespace string is owned by the context. *)
     val namespace : Attribute.t -> string

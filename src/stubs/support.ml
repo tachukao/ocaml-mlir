@@ -12,6 +12,12 @@ module Bindings (F : FOREIGN) = struct
 
     let of_string =
       foreign "mlirStringRefCreateFromCString" (string @-> returning Typs.StringRef.t)
+
+
+    let to_string d =
+      let i = getf d Typs.StringRef.length |> Unsigned.Size_t.to_int in
+      let s = getf d Typs.StringRef.data in
+      String.sub s 0 i
   end
 
   (* LogicalResult API *)

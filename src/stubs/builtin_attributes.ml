@@ -196,7 +196,7 @@ module Bindings (F : FOREIGN) = struct
         (Typs.Context.t
         @-> Typs.StringRef.t
         @-> intptr_t
-        @-> string
+        @-> ptr char
         @-> Typs.Type.t
         @-> returning Typs.Attribute.t)
 

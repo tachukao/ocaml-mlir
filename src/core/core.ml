@@ -3,6 +3,8 @@ open Wrapper
 
 type 'a structured = ('a, [ `Struct ]) Ctypes_static.structured
 
+module StringRef = Bindings.StringRef
+
 module IR = struct
   module Context = struct
     type t = Typs.Context.t structured
@@ -11,9 +13,7 @@ module IR = struct
 
     let num_registered_dialects ctx = num_registered_dialects ctx |> Signed.Long.to_int
     let num_loaded_dialects ctx = num_loaded_dialects ctx |> Signed.Long.to_int
-
-    let get_or_load_dialect ctx s =
-      get_or_load_dialect ctx Bindings.StringRef.(of_string s)
+    let get_or_load_dialect ctx s = get_or_load_dialect ctx StringRef.(of_string s)
   end
 
   module Dialect = struct
@@ -21,7 +21,7 @@ module IR = struct
 
     include Bindings.Dialect
 
-    let namespace dialect = getf (namespace dialect) Typs.StringRef.data
+    let namespace dialect = namespace dialect |> StringRef.to_string
   end
 
   module Type = struct
@@ -30,7 +30,7 @@ module IR = struct
     include Bindings.Type
 
     let parse ctx s =
-      let s = Bindings.StringRef.of_string s in
+      let s = StringRef.of_string s in
       parse ctx s
   end
 
@@ -52,17 +52,17 @@ module IR = struct
     include Bindings.Attribute
 
     let parse ctx s =
-      let s = Bindings.StringRef.of_string s in
+      let s = StringRef.of_string s in
       parse ctx s
 
 
     let print ~callback x =
-      let callback s _ = callback (getf s Typs.StringRef.data) in
+      let callback s _ = callback (StringRef.to_string s) in
       print x callback null
 
 
     let name s attr =
-      let s = Bindings.StringRef.of_string s in
+      let s = StringRef.of_string s in
       name s attr
   end
 
@@ -72,7 +72,7 @@ module IR = struct
     include Bindings.OperationState
 
     let get s loc =
-      let s = Bindings.StringRef.of_string s in
+      let s = StringRef.of_string s in
       get s loc
 
 
@@ -148,7 +148,7 @@ module IR = struct
 
     include Bindings.Module
 
-    let parse ctx str = parse ctx Bindings.StringRef.(of_string str)
+    let parse ctx str = parse ctx StringRef.(of_string str)
   end
 
   module Region = struct
@@ -313,7 +313,7 @@ module BuiltinAttributes = struct
 
     let num_elements x = num_elements x |> Intptr.to_int
     let element x pos = element x Intptr.(of_int pos)
-    let element_by_name x key = element_by_name x Bindings.StringRef.(of_string key)
+    let element_by_name x key = element_by_name x StringRef.(of_string key)
   end
 
   module Float = Bindings.BuiltinAttributes.Float
@@ -331,20 +331,22 @@ module BuiltinAttributes = struct
   module Opaque = struct
     include Bindings.BuiltinAttributes.Opaque
 
-    let get ctx s1 i s2 typs =
-      get ctx Bindings.StringRef.(of_string s1) Intptr.(of_int i) s2 typs
+    let get ctx namespace s typs =
+      let len = String.length s in
+      let s = CArray.of_string s |> CArray.start in
+      get ctx StringRef.(of_string namespace) Intptr.(of_int len) s typs
 
 
-    let namespace x = getf (namespace x) Typs.StringRef.data
-    let data x = getf (data x) Typs.StringRef.data
+    let namespace x = namespace x |> StringRef.to_string
+    let data x = data x |> StringRef.to_string
   end
 
   module String = struct
     include Bindings.BuiltinAttributes.String
 
-    let get ctx s = get ctx Bindings.StringRef.(of_string s)
-    let typed_get typ s = typed_get typ Bindings.StringRef.(of_string s)
-    let value s = getf (value s) Typs.StringRef.data
+    let get ctx s = get ctx StringRef.(of_string s)
+    let typed_get typ s = typed_get typ StringRef.(of_string s)
+    let value s = value s |> StringRef.to_string
   end
 
   module SymbolRef = struct
@@ -353,11 +355,11 @@ module BuiltinAttributes = struct
     let get ctx s attrs =
       let size = List.length attrs |> Intptr.of_int in
       let attrs = CArray.(start (of_list Typs.Attribute.t attrs)) in
-      get ctx Bindings.StringRef.(of_string s) size attrs
+      get ctx StringRef.(of_string s) size attrs
 
 
-    let root_ref attr = getf (root_ref attr) Typs.StringRef.data
-    let leaf_ref attr = getf (leaf_ref attr) Typs.StringRef.data
+    let root_ref attr = root_ref attr |> StringRef.to_string
+    let leaf_ref attr = leaf_ref attr |> StringRef.to_string
     let num_nested_refs x = num_nested_refs x |> Intptr.to_int
     let nested_ref x i = nested_ref x Intptr.(of_int i)
   end
@@ -365,8 +367,8 @@ module BuiltinAttributes = struct
   module FlatSymbolRef = struct
     include Bindings.BuiltinAttributes.FlatSymbolRef
 
-    let get ctx s = get ctx Bindings.StringRef.(of_string s)
-    let value s = getf (value s) Typs.StringRef.data
+    let get ctx s = get ctx StringRef.(of_string s)
+    let value s = value s |> StringRef.to_string
   end
 
   module Type = Bindings.BuiltinAttributes.Type
@@ -429,11 +431,7 @@ module BuiltinAttributes = struct
       let int64_get = _wrapper_get int64_get int64_t Int64.of_int
       let float_get = _wrapper_get float_get float (fun x -> x)
       let double_get = _wrapper_get double_get double (fun x -> x)
-
-      let string_get =
-        _wrapper_get string_get Typs.StringRef.t Bindings.StringRef.of_string
-
-
+      let string_get = _wrapper_get string_get Typs.StringRef.t StringRef.of_string
       let int32_splat_value x = int32_splat_value x |> Int32.to_int
       let uint32_splat_value x = uint32_splat_value x |> Unsigned.UInt32.to_int
       let int64_splat_value x = int64_splat_value x |> Int64.to_int
@@ -445,7 +443,7 @@ module BuiltinAttributes = struct
       let uint64_value x i = uint64_value x Intptr.(of_int i) |> Unsigned.UInt64.to_int
       let float_value x i = float_value x Intptr.(of_int i)
       let double_value x i = double_value x Intptr.(of_int i)
-      let string_value x i = getf (string_value x Intptr.(of_int i)) Typs.StringRef.data
+      let string_value x i = string_value x Intptr.(of_int i) |> StringRef.to_string
     end
   end
 end
@@ -456,7 +454,7 @@ module AffineExpr = struct
   include Bindings.AffineExpr
 
   let print ~callback x =
-    let callback s _ = callback (getf s Typs.StringRef.data) in
+    let callback s _ = callback (StringRef.to_string s) in
     print x callback null
 
 
@@ -504,14 +502,14 @@ module AffineMap = struct
   let minor_sub_map ctx i = minor_sub_map ctx (Intptr.of_int i)
 
   let print ~callback x =
-    let callback s _ = callback (getf s Typs.StringRef.data) in
+    let callback s _ = callback (StringRef.to_string s) in
     print x callback null
 end
 
 module StandardDialect = struct
   include Bindings.StandardDialect
 
-  let namespace () = getf (namespace ()) Typs.StringRef.data
+  let namespace () = (namespace ()) |> StringRef.to_string
 end
 
 module Pass = struct
@@ -524,7 +522,7 @@ module PassManager = struct
   include Bindings.PassManager
 
   let run pass m = Bindings.LogicalResult.(is_success (run pass m))
-  let nested_under pm s = nested_under pm Bindings.StringRef.(of_string s)
+  let nested_under pm s = nested_under pm StringRef.(of_string s)
 end
 
 module OpPassManager = struct
@@ -532,16 +530,15 @@ module OpPassManager = struct
 
   include Bindings.OpPassManager
 
-  let nested_under pm s = nested_under pm Bindings.StringRef.(of_string s)
+  let nested_under pm s = nested_under pm StringRef.(of_string s)
 
   let print_pass_pipeline ~callback x =
-    let callback s _ = callback (getf s Typs.StringRef.data) in
+    let callback s _ = callback (StringRef.to_string s ) in
     print_pass_pipeline x callback null
 
 
   let parse_pass_pipeline pm s =
-    parse_pass_pipeline pm Bindings.StringRef.(of_string s)
-    |> Bindings.LogicalResult.is_success
+    parse_pass_pipeline pm StringRef.(of_string s) |> Bindings.LogicalResult.is_success
 end
 
 module Transforms = Bindings.Transforms
