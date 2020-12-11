@@ -19,7 +19,7 @@ cmake -G Ninja ../llvm \
 
 cmake --build . --target check-mlir
 ```
-Note that the these bindings currently only work with my fork of the [llvm-project](https://github.com/tachukao/llvm-project.git) (see proposed patch [here](https://reviews.llvm.org/D92700)).
+Note that the these bindings currently only work with my fork of the [llvm-project](https://github.com/tachukao/llvm-project.git) (see related patch [here](https://reviews.llvm.org/D92700)).
 Please refer to MLIR's [documentation](https://mlir.llvm.org/getting_started/) for more information.
 
 2. Build the OCaml bindings
