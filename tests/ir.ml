@@ -281,9 +281,18 @@ let print_builtin_attributes ctx =
   assert (BuiltinAttributes.Opaque.(namespace opaque) = "std");
   let opaque_data = BuiltinAttributes.Opaque.data opaque in
   assert (String.length opaque_data = 3);
-  assert (String.length opaque_data = String.length data);
+  assert (opaque_data = data);
   Attribute.dump opaque;
-  ignore ctx
+  (* string *)
+  let data = "de" in
+  let str = BuiltinAttributes.String.get ctx data in
+  assert (BuiltinAttributes.String.(is_string str));
+  let str_value = BuiltinAttributes.String.value str in
+  assert (String.length str_value = 2);
+  assert (str_value = data);
+  Attribute.dump str
+
+
 
 
 let print_affine_map ctx = ignore ctx
@@ -380,6 +389,7 @@ let%expect_test _ =
   42 : i32
   true 
   #std.abc
+  "de"
   |}]
 
 let%expect_test _ =
