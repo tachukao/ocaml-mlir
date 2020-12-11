@@ -387,6 +387,285 @@ module rec BuiltinTypes : sig
   end
 end
 
+and BuiltinAttributes : sig
+  open IR
+
+  module AffineMap : sig
+    (** Checks whether the given attribute is an affine map attribute. *)
+    val is_affine_map : Attribute.t -> bool
+
+    (** Creates an affine map attribute wrapping the given map. The attribute belongs to the same context as the affine map. *)
+    val get : AffineMap.t -> Attribute.t
+
+    (** Returns the affine map wrapped in the given affine map attribute. *)
+    val value : Attribute.t -> AffineMap.t
+  end
+
+  module Array : sig
+    (* Checks whether the given attribute is an array attribute. *)
+    val is_array : Attribute.t -> bool
+
+    (** Creates an array element containing the given list of elements in the given context. *)
+    val get : Context.t -> Attribute.t list -> Attribute.t
+
+    (** Returns the number of elements stored in the given array attribute. *)
+    val num_elements : Attribute.t -> int
+
+    (** Returns pos-th element stored in the given array attribute. *)
+    val element : Attribute.t -> int -> Attribute.t
+  end
+
+  module Dictionary : sig
+    (** Checks whether the given attribute is a dictionary attribute. *)
+    val is_dicationary : Attribute.t -> bool
+
+    (** Creates a dictionary attribute containing the given list of elements in the provided context. *)
+    val get : Context.t -> NamedAttribute.t list -> Attribute.t
+
+    (** Returns the number of attributes contained in a dictionary attribute. *)
+    val num_elements : Attribute.t -> int
+
+    (** Returns pos-th element of the given dictionary attribute. *)
+    val element : Attribute.t -> int -> NamedAttribute.t
+
+    (** Returns the dictionary attribute element with the given name or NULL if the given name does not exist in the dictionary. *)
+    val element_by_name : Attribute.t -> string -> Attribute.t
+  end
+
+  module Float : sig
+    (* TODO: add support for APFloat and APInt to LLVM IR C API, then expose the relevant functions here. *)
+
+    (** Checks whether the given attribute is a floating point attribute. *)
+    val is_float : Attribute.t -> bool
+
+    (** Creates a floating point attribute in the given context with the given double value and double-precision FP semantics. *)
+    val get : Context.t -> Type.t -> float -> Attribute.t
+
+    (** Same as "mlirFloatAttrDoubleGet", but if the type is not valid for a construction of a FloatAttr, returns a null MlirAttribute. *)
+    val get_checked : Type.t -> float -> Location.t -> Attribute.t
+
+    (** Returns the value stored in the given floating point attribute, interpreting
+     * the value as double. *)
+    val value : Attribute.t -> float
+  end
+
+  module Integer : sig
+    (* TODO: add support for APFloat and APInt to LLVM IR C API, then expose the relevant functions here. *)
+
+    (** Checks whether the given attribute is an integer attribute. *)
+    val is_integer : Attribute.t -> bool
+
+    (** Creates an integer attribute of the given type with the given integer value. *)
+    val get : Type.t -> int -> Attribute.t
+
+    (** Returns the value stored in the given integer attribute, assuming the value fits into a 64-bit integer. *)
+    val value : Attribute.t -> int
+  end
+
+  module Bool : sig
+    (** Checks whether the given attribute is a bool attribute. *)
+    val is_bool : Attribute.t -> bool
+
+    (** Creates a bool attribute in the given context with the given value. *)
+    val get : Context.t -> int -> Attribute.t
+
+    (** Returns the value stored in the given bool attribute. *)
+    val value : Attribute.t -> bool
+  end
+
+  module IntegerSet : sig
+    (** Checks whether the given attribute is an integer set attribute. *)
+    val is_integer_set : Attribute.t -> bool
+  end
+
+  module Opaque : sig
+    (** Checks whether the given attribute is an opaque attribute. *)
+    val is_opaque : Attribute.t -> bool
+
+    (** Creates an opaque attribute in the given context associated with the dialect identified by its namespace. The attribute contains opaque byte data of the specified length (data need not be null-terminated). *)
+    val get : Context.t -> string -> int -> string -> Type.t -> Attribute.t
+
+    (** Returns the namespace of the dialect with which the given opaque attribute is associated. The namespace string is owned by the context. *)
+    val namespace : Attribute.t -> string
+
+    (** Returns the raw data as a string reference. The data remains live as long as the context in which the attribute lives. *)
+    val data : Attribute.t -> string
+  end
+
+  module String : sig
+    (** checks whether the given attribute is a string attribute. *)
+    val is_string : Attribute.t -> bool
+
+    (** Creates a string attribute in the given context containing the given string. *)
+    val get : Context.t -> string -> Attribute.t
+
+    (** Creates a string attribute in the given context containing the given string. Additionally, the attribute has the given type. *)
+
+    val typed_get : Type.t -> string -> Attribute.t
+
+    (** Returns the attribute values as a string reference. The data remains live as long as the context in which the attribute lives. *)
+    val value : Attribute.t -> string
+  end
+
+  module SymbolRef : sig
+    (** Checks whether the given attribute is a symbol reference attribute. *)
+    val is_symbol_ref : Attribute.t -> bool
+
+    (** Creates a symbol reference attribute in the given context referencing a symbol identified by the given string inside a list of nested references. Each of the references in the list must not be nested. *)
+    val get : Context.t -> string -> Attribute.t list -> Attribute.t
+
+    (** Returns the string reference to the root referenced symbol. The data remains live as long as the context in which the attribute lives. *)
+    val root_ref : Attribute.t -> string
+
+    (** Returns the string reference to the leaf referenced symbol. The data remains live as long as the context in which the attribute lives. *)
+    val leaf_ref : Attribute.t -> string
+
+    (** Returns the number of references nested in the given symbol reference attribute. *)
+    val num_nested_refs : Attribute.t -> int
+
+    (** Returns pos-th reference nested in the given symbol reference attribute. *)
+    val nested_ref : Attribute.t -> int -> Attribute.t
+  end
+
+  module FlatSymbolRef : sig
+    (** Checks whether the given attribute is a flat symbol reference attribute. *)
+    val is_flat_symbol_ref : Attribute.t -> bool
+
+    (** Creates a flat symbol reference attribute in the given context referencing a symbol identified by the given string. *)
+    val get : Context.t -> string -> Attribute.t
+
+    (** Returns the referenced symbol as a string reference. The data remains live as long as the context in which the attribute lives. *)
+    val value : Attribute.t -> string
+  end
+
+  module Type : sig
+    (** Checks whether the given attribute is a type attribute. *)
+    val is_type : Attribute.t -> bool
+
+    (** Creates a type attribute wrapping the given type in the same context as the type. *)
+    val get : Type.t -> Attribute.t
+
+    (** Returns the type stored in the given type attribute. *)
+    val value : Attribute.t -> Type.t
+  end
+
+  module Unit : sig
+    (** Checks whether the given attribute is a unit attribute. *)
+    val is_unit : Attribute.t -> bool
+
+    (** Creates a unit attribute in the given context. *)
+    val get : Context.t -> Attribute.t
+  end
+
+  module Elements : sig
+    (** Checks whether the given attribute is an elements attribute. *)
+    val is_elements : Attribute.t -> bool
+
+    (** Returns the element at the given rank-dimensional index. *)
+    val get : Attribute.t -> int list -> Attribute.t
+
+    (** Checks whether the given rank-dimensional index is valid in the given elements attribute. *)
+    val is_valid_index : Attribute.t -> int list -> bool
+
+    (** Gets the total number of elements in the given elements attribute. In order to iterate over the attribute, obtain its type, which must be a statically shaped type and use its sizes to build a multi-dimensional index. *)
+    val num_elements : Attribute.t -> int
+
+    module Dense : sig
+      open IR
+
+      (* TODO: decide on the interface and add support for complex elements. *)
+      (* TODO: add support for APFloat and APInt to LLVM IR C API, then expose the relevant functions here. *)
+
+      (** Checks whether the given attribute is a dense elements attribute. *)
+      val is_dense : Attribute.t -> bool
+
+      val is_dense_int : Attribute.t -> bool
+      val is_dense_fpe : Attribute.t -> bool
+
+      (** Creates a dense elements attribute with the given Shaped type and elements in the same context as the type. *)
+      val get : Type.t -> Attribute.t list -> Attribute.t
+
+      (** Creates a dense elements attribute with the given Shaped type containing a single replicated element (splat). *)
+      val splat_get : Type.t -> Attribute.t -> Attribute.t
+
+      val bool_splat_get : Type.t -> bool -> Attribute.t
+      val uint32_splat_get : Type.t -> int -> Attribute.t
+      val int32_splat_get : Type.t -> int -> Attribute.t
+      val uint64_splat_get : Type.t -> int -> Attribute.t
+      val int64_splat_get : Type.t -> int -> Attribute.t
+      val float_splat_get : Type.t -> float -> Attribute.t
+      val double_splat_get : Type.t -> float -> Attribute.t
+
+      (** Creates a dense elements attribute with the given shaped type from elements of a specific type. Expects the element type of the shaped type to match the * data element type. *)
+      val bool_get : Type.t -> int list -> Attribute.t
+
+      val uint32_get : Type.t -> int list -> Attribute.t
+      val int32_get : Type.t -> int list -> Attribute.t
+      val uint64_get : Type.t -> int list -> Attribute.t
+      val int64_get : Type.t -> int list -> Attribute.t
+      val float_get : Type.t -> float list -> Attribute.t
+      val double_get : Type.t -> float list -> Attribute.t
+
+      (** Creates a dense elements attribute with the given shaped type from string elements. *)
+      val string_get : Type.t -> string list -> Attribute.t
+
+      (** Creates a dense elements attribute that has the same data as the given dense elements attribute and a different shaped type. The new type must have the same total number of elements. *)
+      val reshape_get : Attribute.t -> Type.t -> Attribute.t
+
+      (** Checks whether the given dense elements attribute contains a single replicated value (splat). *)
+      val is_splat : Attribute.t -> bool
+
+      (** Returns the single replicated value (splat) of a specific type contained by the given dense elements attribute. *)
+      val splat_value : Attribute.t -> Attribute.t
+
+      val bool_splat_value : Attribute.t -> int
+      val int32_splat_value : Attribute.t -> int
+      val uint32_splat_value : Attribute.t -> int
+      val int64_splat_value : Attribute.t -> int
+      val uint64_splat_value : Attribute.t -> int
+      val float_splat_value : Attribute.t -> float
+      val double_splat_value : Attribute.t -> float
+
+      (** Returns the pos-th value (flat contiguous indexing) of a specific type contained by the given dense elements attribute. *)
+      val bool_value : Attribute.t -> int -> bool
+
+      val int32_value : Attribute.t -> int -> int
+      val uint32_value : Attribute.t -> int -> int
+      val int64_value : Attribute.t -> int -> int
+      val uint64_value : Attribute.t -> int -> int
+      val float_value : Attribute.t -> int -> float
+      val double_value : Attribute.t -> int -> float
+      val string_value : Attribute.t -> int -> string
+
+      (* Returns the raw data of the given dense elements attribute. *)
+      (* val raw_data : Attribute.t -> unit *)
+    end
+
+    module Opaque : sig
+      (* TODO: expose Dialect to the bindings and implement accessors here. *)
+
+      (** Checks whether the given attribute is an opaque elements attribute. *)
+      val is_opaque : Attribute.t -> bool
+    end
+
+    module Sparse : sig
+      open IR
+
+      (** Checks whether the given attribute is a sparse elements attribute. *)
+      val is_sparse : Attribute.t -> bool
+
+      (** Creates a sparse elements attribute of the given shape from a list of indices and a list of associated values. Both lists are expected to be dense elements attributes with the same number of elements. The list of indices is expected to contain 64-bit integers. The attribute is created in the same context as the type. *)
+      val create : Type.t -> Attribute.t -> Attribute.t -> Attribute.t
+
+      (** Returns the dense elements attribute containing 64-bit integer indices of non-null elements in the given sparse elements attribute. *)
+      val indices : Attribute.t -> Attribute.t
+
+      (** Returns the dense elements attribute containing the non-null elements in the given sparse elements attribute. *)
+      val values : Attribute.t -> Attribute.t
+    end
+  end
+end
+
 and AffineMap : sig
   open IR
 

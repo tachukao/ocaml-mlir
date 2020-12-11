@@ -281,6 +281,170 @@ module BuiltinTypes = struct
   end
 end
 
+module BuiltinAttributes = struct
+  module AffineMap = Bindings.BuiltinAttributes.AffineMap
+
+  module Array = struct
+    include Bindings.BuiltinAttributes.Array
+
+    let get ctx x =
+      let size = List.length x |> Intptr.of_int in
+      let x = CArray.(start (of_list Typs.Attribute.t x)) in
+      get ctx size x
+
+
+    let num_elements x = num_elements x |> Intptr.to_int
+    let element x pos = element x Intptr.(of_int pos)
+  end
+
+  module Dictionary = struct
+    include Bindings.BuiltinAttributes.Dictionary
+
+    let get ctx x =
+      let size = List.length x |> Intptr.of_int in
+      let x = CArray.(start (of_list Typs.NamedAttribute.t x)) in
+      get ctx size x
+
+
+    let num_elements x = num_elements x |> Intptr.to_int
+    let element x pos = element x Intptr.(of_int pos)
+    let element_by_name x key = element_by_name x Bindings.StringRef.(of_string key)
+  end
+
+  module Float = Bindings.BuiltinAttributes.Float
+
+  module Integer = struct
+    include Bindings.BuiltinAttributes.Integer
+
+    let get x i = get x Int64.(of_int i)
+    let value x = value x |> Int64.to_int
+  end
+
+  module Bool = Bindings.BuiltinAttributes.Bool
+  module IntegerSet = Bindings.BuiltinAttributes.IntegerSet
+
+  module Opaque = struct
+    include Bindings.BuiltinAttributes.Opaque
+
+    let get ctx s1 i s2 typs =
+      get ctx Bindings.StringRef.(of_string s1) Intptr.(of_int i) s2 typs
+
+
+    let namespace x = getf (namespace x) Typs.StringRef.data
+    let data x = getf (data x) Typs.StringRef.data
+  end
+
+  module String = struct
+    include Bindings.BuiltinAttributes.String
+
+    let get ctx s = get ctx Bindings.StringRef.(of_string s)
+    let typed_get typ s = typed_get typ Bindings.StringRef.(of_string s)
+    let value s = getf (value s) Typs.StringRef.data
+  end
+
+  module SymbolRef = struct
+    include Bindings.BuiltinAttributes.SymbolRef
+
+    let get ctx s attrs =
+      let size = List.length attrs |> Intptr.of_int in
+      let attrs = CArray.(start (of_list Typs.Attribute.t attrs)) in
+      get ctx Bindings.StringRef.(of_string s) size attrs
+
+
+    let root_ref attr = getf (root_ref attr) Typs.StringRef.data
+    let leaf_ref attr = getf (leaf_ref attr) Typs.StringRef.data
+    let num_nested_refs x = num_nested_refs x |> Intptr.to_int
+    let nested_ref x i = nested_ref x Intptr.(of_int i)
+  end
+
+  module FlatSymbolRef = struct
+    include Bindings.BuiltinAttributes.FlatSymbolRef
+
+    let get ctx s = get ctx Bindings.StringRef.(of_string s)
+    let value s = getf (value s) Typs.StringRef.data
+  end
+
+  module Type = Bindings.BuiltinAttributes.Type
+  module Unit = Bindings.BuiltinAttributes.Unit
+
+  module Elements = struct
+    include Bindings.BuiltinAttributes.Elements
+
+    let get attr xs =
+      let size = List.length xs |> Intptr.of_int in
+      let xs =
+        let xs = List.map Unsigned.UInt64.of_int xs in
+        CArray.(start (of_list uint64_t xs))
+      in
+      get attr size xs
+
+
+    let is_valid_index attr xs =
+      let size = List.length xs |> Intptr.of_int in
+      let xs =
+        let xs = List.map Unsigned.UInt64.of_int xs in
+        CArray.(start (of_list uint64_t xs))
+      in
+      is_valid_index attr size xs
+
+
+    let num_elements attrs = num_elements attrs |> Intptr.to_int
+
+    module Sparse = Bindings.BuiltinAttributes.Elements.Sparse
+    module Opaque = Bindings.BuiltinAttributes.Elements.Opaque
+
+    module Dense = struct
+      include Bindings.BuiltinAttributes.Elements.Dense
+
+      let get attr xs =
+        let size = List.length xs |> Intptr.of_int in
+        let xs = CArray.(start (of_list Typs.Attribute.t xs)) in
+        get attr size xs
+
+
+      let uint32_splat_get typ i = uint32_splat_get typ Unsigned.UInt32.(of_int i)
+      let int32_splat_get typ i = int32_splat_get typ Int32.(of_int i)
+      let uint64_splat_get typ i = uint64_splat_get typ Unsigned.UInt64.(of_int i)
+      let int64_splat_get typ i = int64_splat_get typ Int64.(of_int i)
+
+      let _wrapper_get f t g =
+        let dummy typ xs =
+          let xs = List.map g xs in
+          let size = List.length xs |> Intptr.of_int in
+          let xs = CArray.(start (of_list t xs)) in
+          f typ size xs
+        in
+        dummy
+
+
+      let bool_get = _wrapper_get bool_get int (fun x -> x)
+      let uint32_get = _wrapper_get uint32_get uint32_t Unsigned.UInt32.of_int
+      let int32_get = _wrapper_get int32_get int32_t Int32.of_int
+      let uint64_get = _wrapper_get uint64_get uint64_t Unsigned.UInt64.of_int
+      let int64_get = _wrapper_get int64_get int64_t Int64.of_int
+      let float_get = _wrapper_get float_get float (fun x -> x)
+      let double_get = _wrapper_get double_get double (fun x -> x)
+
+      let string_get =
+        _wrapper_get string_get Typs.StringRef.t Bindings.StringRef.of_string
+
+
+      let int32_splat_value x = int32_splat_value x |> Int32.to_int
+      let uint32_splat_value x = uint32_splat_value x |> Unsigned.UInt32.to_int
+      let int64_splat_value x = int64_splat_value x |> Int64.to_int
+      let uint64_splat_value x = uint64_splat_value x |> Unsigned.UInt64.to_int
+      let bool_value x i = bool_value x Intptr.(of_int i)
+      let int32_value x i = int32_value x Intptr.(of_int i) |> Int32.to_int
+      let uint32_value x i = uint32_value x Intptr.(of_int i) |> Unsigned.UInt32.to_int
+      let int64_value x i = int64_value x Intptr.(of_int i) |> Int64.to_int
+      let uint64_value x i = uint64_value x Intptr.(of_int i) |> Unsigned.UInt64.to_int
+      let float_value x i = float_value x Intptr.(of_int i)
+      let double_value x i = double_value x Intptr.(of_int i)
+      let string_value x i = getf (string_value x Intptr.(of_int i)) Typs.StringRef.data
+    end
+  end
+end
+
 module AffineMap = struct
   type t = Typs.AffineMap.t structured
 
