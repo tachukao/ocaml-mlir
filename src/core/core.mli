@@ -157,7 +157,43 @@ module IR : sig
     val dump : mlop -> unit
   end
 
-  module Value : sig end
+  module Value : sig
+    (** Returns whether the value is null. *)
+    val is_null : mlvalue -> bool
+
+    (** Returns 1 if two values are equal, 0 otherwise. *)
+    val equal : mlvalue -> mlvalue -> bool
+
+    (** Returns 1 if the value is a block argument, 0 otherwise. *)
+    val is_block_argument : mlvalue -> bool
+
+    (** Returns 1 if the value is an operation result, 0 otherwise. *)
+    val is_op_result : mlvalue -> bool
+
+    (** Returns the block in which this value is defined as an argument. Asserts if the value is not a block argument. *)
+    val block_argument_get_owner : mlvalue -> mlblock
+
+    (** Returns the position of the value in the argument list of its block. *)
+    val block_argument_arg_num : mlvalue -> int
+
+    (** Sets the type of the block argument to the given type. *)
+    val block_argument_set_type : mlvalue -> mltype -> unit
+
+    (** Returns an operation that produced this value as its result. Asserts if the value is not an op result. *)
+    val op_result_get_owner : mlvalue -> mlop
+
+    (** Returns the position of the value in the list of results of the operation that produced it. *)
+    val op_result_get_result_num : mlvalue -> int
+
+    (** Returns the type of the value. *)
+    val get_type : mlvalue -> mltype
+
+    (** Prints the value to the standard error stream. *)
+    val dump : mlvalue -> unit
+
+    (** Prints a value by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
+    val print : callback:(string -> unit) -> mlvalue -> unit
+  end
 
   module Block : sig
     (** Creates a new empty block with the given argument types and transfers ownership to the caller. *)

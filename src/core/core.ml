@@ -117,6 +117,13 @@ module IR = struct
 
   module Value = struct
     include Bindings.Value
+
+    let block_argument_arg_num x = block_argument_arg_num x |> Intptr.to_int
+    let op_result_get_result_num x = op_result_get_result_num x |> Intptr.to_int
+
+    let print ~callback x =
+      let callback s _ = callback (StringRef.to_string s) in
+      print x callback null
   end
 
   module Block = struct
