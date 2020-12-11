@@ -2,13 +2,26 @@ open Ctypes
 open Wrapper
 
 type 'a structured = ('a, [ `Struct ]) Ctypes_static.structured
+type mlcontext = Typs.Context.t structured
+type mldialect = Typs.Dialect.t structured
+type mltype = Typs.Type.t structured
+type mlblock = Typs.Block.t structured
+type mlregion = Typs.Region.t structured
+type mlvalue = Typs.Value.t structured
+type mllocation = Typs.Location.t structured
+type mlmodule = Typs.Module.t structured
+type mloperation = Typs.Operation.t structured
+type mloperationstate = Typs.OperationState.t structured
+type mlattribute = Typs.Attribute.t structured
+type mlnamedattribute = Typs.NamedAttribute.t structured
+type mlpass = Typs.Pass.t structured
+type mlpassmanager = Typs.PassManager.t structured
+type mloppassmanager = Typs.OpPassManager.t structured
 
 module StringRef = Bindings.StringRef
 
 module IR = struct
   module Context = struct
-    type t = Typs.Context.t structured
-
     include Bindings.Context
 
     let num_registered_dialects ctx = num_registered_dialects ctx |> Signed.Long.to_int
@@ -17,16 +30,12 @@ module IR = struct
   end
 
   module Dialect = struct
-    type t = Typs.Dialect.t structured
-
     include Bindings.Dialect
 
     let namespace dialect = namespace dialect |> StringRef.to_string
   end
 
   module Type = struct
-    type t = Typs.Type.t structured
-
     include Bindings.Type
 
     let parse ctx s =
@@ -35,20 +44,12 @@ module IR = struct
   end
 
   module Location = struct
-    type t = Typs.Location.t structured
-
     include Bindings.Location
 
     let unknown = unknown
   end
 
-  module NamedAttribute = struct
-    type t = Typs.NamedAttribute.t structured
-  end
-
   module Attribute = struct
-    type t = Typs.Attribute.t structured
-
     include Bindings.Attribute
 
     let parse ctx s =
@@ -67,8 +68,6 @@ module IR = struct
   end
 
   module OperationState = struct
-    type t = Typs.OperationState.t structured
-
     include Bindings.OperationState
 
     let get s loc =
@@ -105,8 +104,6 @@ module IR = struct
   end
 
   module Operation = struct
-    type t = Typs.Operation.t structured
-
     include Bindings.Operation
 
     let create opstate =
@@ -119,12 +116,10 @@ module IR = struct
   end
 
   module Value = struct
-    type t = Typs.Value.t structured
+    include Bindings.Value
   end
 
   module Block = struct
-    type t = Typs.Block.t structured
-
     include Bindings.Block
 
     let create typs =
@@ -144,8 +139,6 @@ module IR = struct
   end
 
   module Module = struct
-    type t = Typs.Module.t structured
-
     include Bindings.Module
 
     let parse ctx str = parse ctx StringRef.(of_string str)
@@ -153,8 +146,6 @@ module IR = struct
 
   module Region = struct
     include Bindings.Region
-
-    type t = Typs.Region.t structured
   end
 end
 
@@ -532,13 +523,7 @@ module StandardDialect = struct
   let namespace () = namespace () |> StringRef.to_string
 end
 
-module Pass = struct
-  type t = Typs.Pass.t structured
-end
-
 module PassManager = struct
-  type t = Typs.PassManager.t structured
-
   include Bindings.PassManager
 
   let run pass m = Bindings.LogicalResult.(is_success (run pass m))
@@ -546,8 +531,6 @@ module PassManager = struct
 end
 
 module OpPassManager = struct
-  type t = Typs.OpPassManager.t structured
-
   include Bindings.OpPassManager
 
   let nested_under pm s = nested_under pm StringRef.(of_string s)

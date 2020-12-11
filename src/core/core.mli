@@ -1,696 +1,675 @@
-module IR : sig
-  module rec Context : sig
-    type t
+type mlcontext
+type mldialect
+type mltype
+type mlblock
+type mlregion
+type mllocation
+type mlmodule
+type mlvalue
+type mloperation
+type mloperationstate
+type mlattribute
+type mlnamedattribute
+type mlpass
+type mlpassmanager
+type mloppassmanager
 
+module IR : sig
+  module Context : sig
     (** Creates an MLIR context and transfers its ownership to the caller. *)
-    val create : unit -> t
+    val create : unit -> mlcontext
 
     (** Checks if two contexts are equal. *)
-    val equal : t -> t -> bool
+    val equal : mlcontext -> mlcontext -> bool
 
     (** Takes an MLIR context owned by the caller and destroys it. *)
-    val destroy : t -> unit
+    val destroy : mlcontext -> unit
 
     (** Checks whether a context is null. *)
-    val is_null : t -> bool
+    val is_null : mlcontext -> bool
 
     (** Returns the number of dialects registered with the given context. A registered dialect will be loaded if needed by the parser. *)
-    val num_registered_dialects : t -> int
+    val num_registered_dialects : mlcontext -> int
 
     (** Returns the number of dialects loaded by the context.*)
-    val num_loaded_dialects : t -> int
+    val num_loaded_dialects : mlcontext -> int
 
     (** Sets whether unregistered dialects are allowed in this context. *)
-    val set_allow_unregistered_dialects : t -> bool -> unit
+    val set_allow_unregistered_dialects : mlcontext -> bool -> unit
 
     (** Returns whether the context allows unregistered dialects. *)
-    val get_allow_unregistered_dialects : t -> bool
+    val get_allow_unregistered_dialects : mlcontext -> bool
 
-    (** Gets the dialect instance owned by the given context using the dialect namespace to identify it, loads (i.e., constructs the instance of) the dialect if necessary. If the dialect is not registered with the context, returns null. Use mlirContextLoad<Name>Dialect to load an unregistered dialect. *)
-    val get_or_load_dialect : t -> string -> Dialect.t
+    (** Gets the dialect instance owned by the given context using the dialect namespace to identify it, loads (i.e., constructs the instance of) the dialect if necessary. If the dialect is not registered with the context, returns null. Use mlirContextLoad<Name>mldialecto load an unregistered dialect. *)
+    val get_or_load_dialect : mlcontext -> string -> mldialect
   end
 
-  and Dialect : sig
-    type t
-
+  module Dialect : sig
     (** Returns the context that owns the dialect. *)
-    val context : t -> Context.t
+    val context : mldialect -> mlcontext
 
     (** Checks if the dialect is null. *)
-    val is_null : t -> bool
+    val is_null : mldialect -> bool
 
     (** Checks if two dialects that belong to the same context are equal. Dialects from different contexts will not compare equal. *)
-    val equal : t -> t -> bool
+    val equal : mldialect -> mldialect -> bool
 
     (** Returns the namespace of the given dialect. *)
-    val namespace : t -> string
+    val namespace : mldialect -> string
   end
 
-  and Type : sig
-    type t
-
+  module Type : sig
     (** Checks if two types are equal. *)
-    val equal : t -> t -> bool
+    val equal : mltype -> mltype -> bool
 
     (** Parses a type. The type is owned by the context. *)
-    val parse : Context.t -> string -> t
+    val parse : mlcontext -> string -> mltype
 
     (** Prints the type to the standard error stream. *)
-    val dump : t -> unit
+    val dump : mltype -> unit
   end
 
-  and Region : sig
-    type t
-
+  module Region : sig
     (** Creates a new empty region and transfers ownership to the caller. *)
-    val create : unit -> t
+    val create : unit -> mlregion
 
     (** Takes a region owned by the caller and destroys it. *)
-    val destroy : t -> unit
+    val destroy : mlregion -> unit
 
     (** Gets the first block in the region. *)
-    val first_block : t -> Block.t
+    val first_block : mlregion -> mlblock
 
     (** Takes a block owned by the caller and appends it to the given region. *)
-    val append_owned_block : t -> Block.t -> unit
+    val append_owned_block : mlregion -> mlblock -> unit
 
     (** Takes a block owned by the caller and inserts it at `pos` to the given region. This is an expensive operation that linearly scans the region, prefer insertAfter/Before instead. *)
-    val insert_owned_block_before : t -> Block.t -> Block.t -> unit
+    val insert_owned_block_before : mlregion -> mlblock -> mlblock -> unit
 
     (** Takes a block owned by the caller and inserts it after the (non-owned) reference block in the given region. The reference block must belong to the region. If the reference block is null, prepends the block to the region. *)
-    val insert_owned_block_after : t -> Block.t -> Block.t -> unit
+    val insert_owned_block_after : mlregion -> mlblock -> mlblock -> unit
   end
 
-  and Location : sig
-    type t
-
+  module Location : sig
     (** Creates a location with unknown position owned by the given context. *)
-    val unknown : Context.t -> t
+    val unknown : mlcontext -> mllocation
   end
 
-  and NamedAttribute : sig
-    type t
-  end
-
-  and Attribute : sig
-    type t
-
+  module Attribute : sig
     (** Parses an attribute. The attribute is owned by the context. *)
-    val parse : Context.t -> string -> t
+    val parse : mlcontext -> string -> mlattribute
 
     (** Gets the context that an attribute was created with. *)
-    val context : t -> Context.t
+    val context : mlattribute -> mlcontext
 
     (** Gets the type of this attribute. *)
-    val get_type : t -> Type.t
+    val get_type : mlattribute -> mltype
 
     (** Checks whether an attribute is null. *)
-    val is_null : t -> bool
+    val is_null : mlattribute -> bool
 
     (** Checks if two attributes are equal. *)
-    val equal : t -> t -> bool
+    val equal : mlattribute -> mlattribute -> bool
 
     (** Prints an attribute by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
-    val print : callback:(string -> unit) -> t -> unit
+    val print : callback:(string -> unit) -> mlattribute -> unit
 
     (** Prints the attribute to the standard error stream. *)
-    val dump : t -> unit
+    val dump : mlattribute -> unit
 
     (** Associates an attribute with the name. Takes ownership of neither. *)
-    val name : string -> t -> NamedAttribute.t
+    val name : string -> mlattribute -> mlnamedattribute
   end
 
-  and OperationState : sig
-    type t
-
+  module OperationState : sig
     (** Constructs an operation state from a name and a location. *)
-    val get : string -> Location.t -> t
+    val get : string -> mllocation -> mloperationstate
 
     (** Adds a list of results to the operation state. *)
-    val add_results : t -> Type.t list -> unit
+    val add_results : mloperationstate -> mltype list -> unit
 
     (** Adds a list of named attributes to the operation state. *)
-    val add_named_attributes : t -> NamedAttribute.t list -> unit
+    val add_named_attributes : mloperationstate -> mlnamedattribute list -> unit
 
     (** Adds a list of regions to the operation state. *)
-    val add_owned_regions : t -> Region.t list -> unit
+    val add_owned_regions : mloperationstate -> mlregion list -> unit
 
     (** Adds a list of operands to the operation state. *)
-    val add_operands : t -> Value.t list -> unit
+    val add_operands : mloperationstate -> mlvalue list -> unit
   end
 
-  and Operation : sig
-    type t
-
+  module Operation : sig
     (** Creates an operation and transfers ownership to the caller. *)
-    val create : OperationState.t -> t
+    val create : mloperationstate -> mloperation
 
     (** Takes an operation owned by the caller and destroys it. *)
-    val destroy : t -> unit
+    val destroy : mloperation -> unit
 
     (** Checks whether the underlying operation is null. *)
-    val is_null : Operation.t -> bool
+    val is_null : mloperation -> bool
 
     (** Returns `pos`-th region attached to the operation. *)
-    val region : t -> int -> Region.t
+    val region : mloperation -> int -> mlregion
 
     (** Returns `pos`-th result of the operation. *)
-    val result : t -> int -> Value.t
+    val result : mloperation -> int -> mlvalue
 
     (** Prints an operation to stderr. *)
-    val dump : t -> unit
+    val dump : mloperation -> unit
   end
 
-  and Value : sig
-    type t
-  end
+  module Value : sig end
 
-  and Block : sig
-    type t
-
+  module Block : sig
     (** Creates a new empty block with the given argument types and transfers ownership to the caller. *)
-    val create : Type.t list -> t
+    val create : mltype list -> mlblock
 
     (** Takes a block owned by the caller and destroys it. *)
-    val destroy : t -> unit
+    val destroy : mlblock -> unit
 
     (** Returns `pos`-th argument of the block. *)
-    val argument : t -> int -> Value.t
+    val argument : mlblock -> int -> mlvalue
 
     (** Returns the first operation in the block. *)
-    val first_operation : t -> Operation.t
+    val first_operation : mlblock -> mloperation
 
     (** Takes an operation owned by the caller and inserts it as `pos` to the block. This is an expensive operation that scans the block linearly, prefer insertBefore/After instead. *)
-    val insert_owned_operation : t -> int -> Operation.t -> unit
+    val insert_owned_operation : mlblock -> int -> mloperation -> unit
 
     (** Takes an operation owned by the caller and inserts it before the (non-owned) reference operation in the given block. If the reference is null, appends the operation. Otherwise, the reference must belong to the block. *)
-    val insert_owned_operation_before : t -> Operation.t -> Operation.t -> unit
+    val insert_owned_operation_before : mlblock -> mloperation -> mloperation -> unit
 
     (** Takes an operation owned by the caller and inserts it after the (non-owned) reference operation in the given block. If the reference is null, prepends the operation. Otherwise, the reference must belong to the block. *)
-    val insert_owned_operation_after : t -> Operation.t -> Operation.t -> unit
+    val insert_owned_operation_after : mlblock -> mloperation -> mloperation -> unit
 
     (** Takes an operation owned by the caller and appends it to the block. *)
-    val append_owned_operation : t -> Operation.t -> unit
+    val append_owned_operation : mlblock -> mloperation -> unit
   end
 
-  and Module : sig
-    type t
-
+  module Module : sig
     (** Creates a new, empty module and transfers ownership to the caller. *)
-    val empty : Location.t -> t
+    val empty : mllocation -> mlmodule
 
     (** Parses a module from the string and transfers ownership to the caller. *)
-    val parse : Context.t -> string -> t
+    val parse : mlcontext -> string -> mlmodule
 
     (** Checks whether a module is null. *)
-    val is_null : t -> bool
+    val is_null : mlmodule -> bool
 
     (** Takes a module owned by the caller and deletes it. *)
-    val destroy : t -> unit
+    val destroy : mlmodule -> unit
 
     (** Gets the context that a module was created with. *)
-    val context : t -> Context.t
+    val context : mlmodule -> mlcontext
 
     (** Gets the body of the module, i.e. the only block it contains. *)
-    val body : t -> Block.t
+    val body : mlmodule -> mlblock
 
     (** Views the module as a generic operation. *)
-    val operation : t -> Operation.t
+    val operation : mlmodule -> mloperation
   end
 end
 
 module rec BuiltinTypes : sig
-  open IR
-
   module Integer : sig
     (** Checks whether the given type is an integer type. *)
-    val is_integer : Type.t -> bool
+    val is_integer : mltype -> bool
 
     (** Creates a signless integer type of the given bitwidth in the context. The type is owned by the context. *)
-    val get : Context.t -> int -> Type.t
+    val get : mlcontext -> int -> mltype
 
     (** Creates a signed integer type of the given bitwidth in the context. The type is owned by the context. *)
-    val signed : Context.t -> int -> Type.t
+    val signed : mlcontext -> int -> mltype
 
     (** Creates an unsigned integer type of the given bitwidth in the context. The type is owned by the context. *)
-    val unsigned : Context.t -> int -> Type.t
+    val unsigned : mlcontext -> int -> mltype
 
     (** Returns the bitwidth of an integer type. *)
-    val width : Type.t -> int
+    val width : mltype -> int
 
     (** Checks whether the given integer type is signless. *)
-    val is_signless : Type.t -> bool
+    val is_signless : mltype -> bool
 
     (** Checks whether the given integer type is signed. *)
-    val is_signed : Type.t -> bool
+    val is_signed : mltype -> bool
 
     (** Checks whether the given integer type is unsigned. *)
-    val is_unsigned : Type.t -> bool
+    val is_unsigned : mltype -> bool
   end
 
   module Float : sig
     (** Checks whether the given type is a bf16 type. *)
-    val is_bf16 : Type.t -> bool
+    val is_bf16 : mltype -> bool
 
     (** Creates a bf16 type in the given context. The type is owned by the context. *)
-    val bf16 : Context.t -> Type.t
+    val bf16 : mlcontext -> mltype
 
     (** Checks whether the given type is an f16 type. *)
-    val is_f16 : Type.t -> bool
+    val is_f16 : mltype -> bool
 
     (** Creates an f16 type in the given context. The type is owned by the context. *)
-    val f16 : Context.t -> Type.t
+    val f16 : mlcontext -> mltype
 
     (** Checks whether the given type is an f32 type. *)
-    val is_f32 : Type.t -> bool
+    val is_f32 : mltype -> bool
 
     (** Creates an f32 type in the given context. The type is owned by the context. *)
-    val f32 : Context.t -> Type.t
+    val f32 : mlcontext -> mltype
 
     (** Checks whether the given type is an f64 type. *)
-    val is_f64 : Type.t -> bool
+    val is_f64 : mltype -> bool
 
     (** Creates a f64 type in the given context. The type is owned by the context. *)
-    val f64 : Context.t -> Type.t
+    val f64 : mlcontext -> mltype
   end
 
   module Index : sig
     (** Checks whether the given type is an index type. *)
-    val is_index : Type.t -> bool
+    val is_index : mltype -> bool
 
     (** Creates an index type in the given context. The type is owned by the context. *)
-    val get : Context.t -> Type.t
+    val get : mlcontext -> mltype
   end
 
   module None : sig
     (** Checks whether the given type is a None type. *)
-    val is_none : Type.t -> bool
+    val is_none : mltype -> bool
 
     (** Creates a None type in the given context. The type is owned by the context. *)
-    val get : Context.t -> Type.t
+    val get : mlcontext -> mltype
   end
 
   module Complex : sig
     (** Checks whether the given type is a Complex type. *)
-    val is_complex : Type.t -> bool
+    val is_complex : mltype -> bool
 
     (** Creates a complex type with the given element type in the same context as the element type. The type is owned by the context. *)
-    val get : Type.t -> Type.t
+    val get : mltype -> mltype
 
     (** Returns the element type of the given complex type. *)
-    val element_type : Type.t -> Type.t
+    val element_type : mltype -> mltype
   end
 
   module Vector : sig
     (** Checks whether the given type is a Vector type. *)
-    val is_vector : Type.t -> bool
+    val is_vector : mltype -> bool
 
     (** Creates a vector type of the shape identified by its rank and dimensions, with the given element type in the same context as the element type. The type is owned by the context. *)
-    val get : int array -> Type.t -> Type.t
+    val get : int array -> mltype -> mltype
 
     (** Same as "mlirVectorTypeGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
-    val get_checked : int array -> Type.t -> Location.t -> Type.t
+    val get_checked : int array -> mltype -> mllocation -> mltype
   end
 
   module Tensor : sig
     (** Checks whether the given type is a Tensor type. *)
-    val is_tensor : Type.t -> bool
+    val is_tensor : mltype -> bool
 
     (** Checks whether the given type is a ranked tensor type. *)
-    val is_ranked_tensor : Type.t -> bool
+    val is_ranked_tensor : mltype -> bool
 
     (** Checks whether the given type is an unranked tensor type. *)
-    val is_unranked_tensor : Type.t -> bool
+    val is_unranked_tensor : mltype -> bool
 
     (** Creates a tensor type of a fixed rank with the given shape and element type in the same context as the element type. The type is owned by the context. *)
-    val ranked : int array -> Type.t -> Type.t
+    val ranked : int array -> mltype -> mltype
 
     (** Same as "mlirRankedTensorTypeGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
-    val ranked_checked : int array -> Type.t -> Location.t -> Type.t
+    val ranked_checked : int array -> mltype -> mllocation -> mltype
 
     (** Creates an unranked tensor type with the given element type in the same context as the element type. The type is owned by the context. *)
-    val unranked : Type.t -> Type.t
+    val unranked : mltype -> mltype
 
     (** Same as "mlirUnrankedTensorTypeGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
-    val unranked_checked : Type.t -> Location.t -> Type.t
+    val unranked_checked : mltype -> mllocation -> mltype
   end
 
   module MemRef : sig
     (** Checks whether the given type is a MemRef type. *)
-    val is_memref : Type.t -> bool
+    val is_memref : mltype -> bool
 
     (** Checks whether the given type is an UnrankedMemRef type. *)
-    val is_unranked_memref : Type.t -> bool
+    val is_unranked_memref : mltype -> bool
 
     (** Creates a MemRef type with the given rank and shape, a potentially empty list of affine layout maps, the given memory space and element type, in the same context as element type. The type is owned by the context. *)
-    val get : Type.t -> int array -> AffineMap.t list -> int -> Type.t
+    val get : mltype -> int array -> AffineMap.t list -> int -> mltype
 
     (** Creates a MemRef type with the given rank, shape, memory space and element type in the same context as the element type. The type has no affine maps, i.e. represents a default row-major contiguous memref. The type is owned by the context. *)
-    val contiguous : Type.t -> int array -> int -> Type.t
+    val contiguous : mltype -> int array -> int -> mltype
 
     (** Same as "mlirMemRefTypeContiguousGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
-    val contiguous_checked : Type.t -> int array -> int -> Location.t -> Type.t
+    val contiguous_checked : mltype -> int array -> int -> mllocation -> mltype
 
     (** Creates an Unranked MemRef type with the given element type and in the given memory space. The type is owned by the context of element type. *)
-    val unranked : Type.t -> int -> Type.t
+    val unranked : mltype -> int -> mltype
 
     (** Same as "mlirUnrankedMemRefTypeGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
-    val unranked_checked : Type.t -> int -> Location.t -> Type.t
+    val unranked_checked : mltype -> int -> mllocation -> mltype
 
     (** Returns the number of affine layout maps in the given MemRef type. *)
-    val num_affine_maps : Type.t -> int
+    val num_affine_maps : mltype -> int
 
     (** Returns the pos-th affine map of the given MemRef type. *)
-    val affine_map : Type.t -> int -> AffineMap.t
+    val affine_map : mltype -> int -> AffineMap.t
 
     (** Returns the memory space of the given MemRef type. *)
-    val memory_space : Type.t -> int
+    val memory_space : mltype -> int
 
     (** Returns the memory spcae of the given Unranked MemRef type. *)
-    val unranked_memory_space : Type.t -> int
+    val unranked_memory_space : mltype -> int
   end
 
   module Tuple : sig
     (** Checks whether the given type is a tuple type. *)
-    val is_tuple : Type.t -> bool
+    val is_tuple : mltype -> bool
 
     (** Creates a tuple type that consists of the given list of elemental types. The type is owned by the context. *)
-    val get : Context.t -> Type.t list -> Type.t
+    val get : mlcontext -> mltype list -> mltype
 
     (** Returns the number of types contained in a tuple. *)
-    val num_types : Type.t -> int
+    val num_types : mltype -> int
 
     (** Returns the pos-th type in the tuple type. *)
-    val nth : Type.t -> int -> Type.t
+    val nth : mltype -> int -> mltype
   end
 
   module Function : sig
     (** Checks whether the given type is a function type. *)
-    val is_function : Type.t -> bool
+    val is_function : mltype -> bool
 
     (** Creates a function type, mapping a list of input types to result types. *)
-    val get : inputs:Type.t list -> results:Type.t list -> Context.t -> Type.t
+    val get : inputs:mltype list -> results:mltype list -> mlcontext -> mltype
 
     (** Returns the number of input types. *)
-    val num_inputs : Type.t -> int
+    val num_inputs : mltype -> int
 
     (** Returns the number of result types. *)
-    val num_results : Type.t -> int
+    val num_results : mltype -> int
 
     (** Returns the pos-th input type. *)
-    val input : Type.t -> int -> Type.t
+    val input : mltype -> int -> mltype
 
     (** Returns the pos-th result type. *)
-    val result : Type.t -> int -> Type.t
+    val result : mltype -> int -> mltype
   end
 end
 
 and BuiltinAttributes : sig
-  open IR
-
   module AffineMap : sig
     (** Checks whether the given attribute is an affine map attribute. *)
-    val is_affine_map : Attribute.t -> bool
+    val is_affine_map : mlattribute -> bool
 
     (** Creates an affine map attribute wrapping the given map. The attribute belongs to the same context as the affine map. *)
-    val get : AffineMap.t -> Attribute.t
+    val get : AffineMap.t -> mlattribute
 
     (** Returns the affine map wrapped in the given affine map attribute. *)
-    val value : Attribute.t -> AffineMap.t
+    val value : mlattribute -> AffineMap.t
   end
 
   module Array : sig
     (* Checks whether the given attribute is an array attribute. *)
-    val is_array : Attribute.t -> bool
+    val is_array : mlattribute -> bool
 
     (** Creates an array element containing the given list of elements in the given context. *)
-    val get : Context.t -> Attribute.t list -> Attribute.t
+    val get : mlcontext -> mlattribute list -> mlattribute
 
     (** Returns the number of elements stored in the given array attribute. *)
-    val num_elements : Attribute.t -> int
+    val num_elements : mlattribute -> int
 
     (** Returns pos-th element stored in the given array attribute. *)
-    val element : Attribute.t -> int -> Attribute.t
+    val element : mlattribute -> int -> mlattribute
   end
 
   module Dictionary : sig
     (** Checks whether the given attribute is a dictionary attribute. *)
-    val is_dicationary : Attribute.t -> bool
+    val is_dicationary : mlattribute -> bool
 
     (** Creates a dictionary attribute containing the given list of elements in the provided context. *)
-    val get : Context.t -> NamedAttribute.t list -> Attribute.t
+    val get : mlcontext -> mlnamedattribute list -> mlattribute
 
     (** Returns the number of attributes contained in a dictionary attribute. *)
-    val num_elements : Attribute.t -> int
+    val num_elements : mlattribute -> int
 
     (** Returns pos-th element of the given dictionary attribute. *)
-    val element : Attribute.t -> int -> NamedAttribute.t
+    val element : mlattribute -> int -> mlnamedattribute
 
     (** Returns the dictionary attribute element with the given name or NULL if the given name does not exist in the dictionary. *)
-    val element_by_name : Attribute.t -> string -> Attribute.t
+    val element_by_name : mlattribute -> string -> mlattribute
   end
 
   module Float : sig
     (* TODO: add support for APFloat and APInt to LLVM IR C API, then expose the relevant functions here. *)
 
     (** Checks whether the given attribute is a floating point attribute. *)
-    val is_float : Attribute.t -> bool
+    val is_float : mlattribute -> bool
 
-    (** Creates a floating point attribute in the given context with the given double value and double-precision FP semantics. *)
-    val get : Context.t -> Type.t -> float -> Attribute.t
+    (** Creates a floating point attribute in the given context with the given double  and double-precision FP semantics. *)
+    val get : mlcontext -> mltype -> float -> mlattribute
 
     (** Same as "mlirFloatAttrDoubleGet", but if the type is not valid for a construction of a FloatAttr, returns a null MlirAttribute. *)
-    val get_checked : Type.t -> float -> Location.t -> Attribute.t
+    val get_checked : mltype -> float -> mllocation -> mlattribute
 
-    (** Returns the value stored in the given floating point attribute, interpreting
-     * the value as double. *)
-    val value : Attribute.t -> float
+    (** Returns the  stored in the given floating point attribute, interpreting the  as double. *)
+    val value : mlattribute -> float
   end
 
   module Integer : sig
     (* TODO: add support for APFloat and APInt to LLVM IR C API, then expose the relevant functions here. *)
 
     (** Checks whether the given attribute is an integer attribute. *)
-    val is_integer : Attribute.t -> bool
+    val is_integer : mlattribute -> bool
 
-    (** Creates an integer attribute of the given type with the given integer value. *)
-    val get : Type.t -> int -> Attribute.t
+    (** Creates an integer attribute of the given type with the given integer . *)
+    val get : mltype -> int -> mlattribute
 
-    (** Returns the value stored in the given integer attribute, assuming the value fits into a 64-bit integer. *)
-    val value : Attribute.t -> int
+    (** Returns the  stored in the given integer attribute, assuming the value fits into a 64-bit integer. *)
+    val value : mlattribute -> int
   end
 
   module Bool : sig
     (** Checks whether the given attribute is a bool attribute. *)
-    val is_bool : Attribute.t -> bool
+    val is_bool : mlattribute -> bool
 
-    (** Creates a bool attribute in the given context with the given value. *)
-    val get : Context.t -> int -> Attribute.t
+    (** Creates a bool attribute in the given context with the given . *)
+    val get : mlcontext -> int -> mlattribute
 
-    (** Returns the value stored in the given bool attribute. *)
-    val value : Attribute.t -> bool
+    (** Returns the  stored in the given bool attribute. *)
+    val value : mlattribute -> bool
   end
 
   module IntegerSet : sig
     (** Checks whether the given attribute is an integer set attribute. *)
-    val is_integer_set : Attribute.t -> bool
+    val is_integer_set : mlattribute -> bool
   end
 
   module Opaque : sig
     (** Checks whether the given attribute is an opaque attribute. *)
-    val is_opaque : Attribute.t -> bool
+    val is_opaque : mlattribute -> bool
 
     (** Creates an opaque attribute in the given context associated with the dialect identified by its namespace. The attribute contains opaque byte data of the specified length (data need not be null-terminated). *)
-    val get : Context.t -> string -> string -> Type.t -> Attribute.t
+    val get : mlcontext -> string -> string -> mltype -> mlattribute
 
     (** Returns the namespace of the dialect with which the given opaque attribute is associated. The namespace string is owned by the context. *)
-    val namespace : Attribute.t -> string
+    val namespace : mlattribute -> string
 
     (** Returns the raw data as a string reference. The data remains live as long as the context in which the attribute lives. *)
-    val data : Attribute.t -> string
+    val data : mlattribute -> string
   end
 
   module String : sig
     (** checks whether the given attribute is a string attribute. *)
-    val is_string : Attribute.t -> bool
+    val is_string : mlattribute -> bool
 
     (** Creates a string attribute in the given context containing the given string. *)
-    val get : Context.t -> string -> Attribute.t
+    val get : mlcontext -> string -> mlattribute
 
     (** Creates a string attribute in the given context containing the given string. Additionally, the attribute has the given type. *)
 
-    val typed_get : Type.t -> string -> Attribute.t
+    val typed_get : mltype -> string -> mlattribute
 
-    (** Returns the attribute values as a string reference. The data remains live as long as the context in which the attribute lives. *)
-    val value : Attribute.t -> string
+    (** Returns the attribute s as a string reference. The data remains live as long as the context in which the attribute lives. *)
+    val value : mlattribute -> string
   end
 
   module SymbolRef : sig
     (** Checks whether the given attribute is a symbol reference attribute. *)
-    val is_symbol_ref : Attribute.t -> bool
+    val is_symbol_ref : mlattribute -> bool
 
     (** Creates a symbol reference attribute in the given context referencing a symbol identified by the given string inside a list of nested references. Each of the references in the list must not be nested. *)
-    val get : Context.t -> string -> Attribute.t list -> Attribute.t
+    val get : mlcontext -> string -> mlattribute list -> mlattribute
 
     (** Returns the string reference to the root referenced symbol. The data remains live as long as the context in which the attribute lives. *)
-    val root_ref : Attribute.t -> string
+    val root_ref : mlattribute -> string
 
     (** Returns the string reference to the leaf referenced symbol. The data remains live as long as the context in which the attribute lives. *)
-    val leaf_ref : Attribute.t -> string
+    val leaf_ref : mlattribute -> string
 
     (** Returns the number of references nested in the given symbol reference attribute. *)
-    val num_nested_refs : Attribute.t -> int
+    val num_nested_refs : mlattribute -> int
 
     (** Returns pos-th reference nested in the given symbol reference attribute. *)
-    val nested_ref : Attribute.t -> int -> Attribute.t
+    val nested_ref : mlattribute -> int -> mlattribute
   end
 
   module FlatSymbolRef : sig
     (** Checks whether the given attribute is a flat symbol reference attribute. *)
-    val is_flat_symbol_ref : Attribute.t -> bool
+    val is_flat_symbol_ref : mlattribute -> bool
 
     (** Creates a flat symbol reference attribute in the given context referencing a symbol identified by the given string. *)
-    val get : Context.t -> string -> Attribute.t
+    val get : mlcontext -> string -> mlattribute
 
     (** Returns the referenced symbol as a string reference. The data remains live as long as the context in which the attribute lives. *)
-    val value : Attribute.t -> string
+    val value : mlattribute -> string
   end
 
   module Type : sig
     (** Checks whether the given attribute is a type attribute. *)
-    val is_type : Attribute.t -> bool
+    val is_type : mlattribute -> bool
 
     (** Creates a type attribute wrapping the given type in the same context as the type. *)
-    val get : Type.t -> Attribute.t
+    val get : mltype -> mlattribute
 
     (** Returns the type stored in the given type attribute. *)
-    val value : Attribute.t -> Type.t
+    val value : mlattribute -> mltype
   end
 
   module Unit : sig
     (** Checks whether the given attribute is a unit attribute. *)
-    val is_unit : Attribute.t -> bool
+    val is_unit : mlattribute -> bool
 
     (** Creates a unit attribute in the given context. *)
-    val get : Context.t -> Attribute.t
+    val get : mlcontext -> mlattribute
   end
 
   module Elements : sig
     (** Checks whether the given attribute is an elements attribute. *)
-    val is_elements : Attribute.t -> bool
+    val is_elements : mlattribute -> bool
 
     (** Returns the element at the given rank-dimensional index. *)
-    val get : Attribute.t -> int list -> Attribute.t
+    val get : mlattribute -> int list -> mlattribute
 
     (** Checks whether the given rank-dimensional index is valid in the given elements attribute. *)
-    val is_valid_index : Attribute.t -> int list -> bool
+    val is_valid_index : mlattribute -> int list -> bool
 
     (** Gets the total number of elements in the given elements attribute. In order to iterate over the attribute, obtain its type, which must be a statically shaped type and use its sizes to build a multi-dimensional index. *)
-    val num_elements : Attribute.t -> int
+    val num_elements : mlattribute -> int
 
     module Dense : sig
-      open IR
-
       (* TODO: decide on the interface and add support for complex elements. *)
       (* TODO: add support for APFloat and APInt to LLVM IR C API, then expose the relevant functions here. *)
 
       (** Checks whether the given attribute is a dense elements attribute. *)
-      val is_dense : Attribute.t -> bool
+      val is_dense : mlattribute -> bool
 
-      val is_dense_int : Attribute.t -> bool
-      val is_dense_fpe : Attribute.t -> bool
+      val is_dense_int : mlattribute -> bool
+      val is_dense_fpe : mlattribute -> bool
 
       (** Creates a dense elements attribute with the given Shaped type and elements in the same context as the type. *)
-      val get : Type.t -> Attribute.t list -> Attribute.t
+      val get : mltype -> mlattribute list -> mlattribute
 
       (** Creates a dense elements attribute with the given Shaped type containing a single replicated element (splat). *)
-      val splat_get : Type.t -> Attribute.t -> Attribute.t
+      val splat_get : mltype -> mlattribute -> mlattribute
 
-      val bool_splat_get : Type.t -> bool -> Attribute.t
-      val uint32_splat_get : Type.t -> int -> Attribute.t
-      val int32_splat_get : Type.t -> int -> Attribute.t
-      val uint64_splat_get : Type.t -> int -> Attribute.t
-      val int64_splat_get : Type.t -> int -> Attribute.t
-      val float_splat_get : Type.t -> float -> Attribute.t
-      val double_splat_get : Type.t -> float -> Attribute.t
+      val bool_splat_get : mltype -> bool -> mlattribute
+      val uint32_splat_get : mltype -> int -> mlattribute
+      val int32_splat_get : mltype -> int -> mlattribute
+      val uint64_splat_get : mltype -> int -> mlattribute
+      val int64_splat_get : mltype -> int -> mlattribute
+      val float_splat_get : mltype -> float -> mlattribute
+      val double_splat_get : mltype -> float -> mlattribute
 
       (** Creates a dense elements attribute with the given shaped type from elements of a specific type. Expects the element type of the shaped type to match the * data element type. *)
-      val bool_get : Type.t -> int list -> Attribute.t
+      val bool_get : mltype -> int list -> mlattribute
 
-      val uint32_get : Type.t -> int list -> Attribute.t
-      val int32_get : Type.t -> int list -> Attribute.t
-      val uint64_get : Type.t -> int list -> Attribute.t
-      val int64_get : Type.t -> int list -> Attribute.t
-      val float_get : Type.t -> float list -> Attribute.t
-      val double_get : Type.t -> float list -> Attribute.t
+      val uint32_get : mltype -> int list -> mlattribute
+      val int32_get : mltype -> int list -> mlattribute
+      val uint64_get : mltype -> int list -> mlattribute
+      val int64_get : mltype -> int list -> mlattribute
+      val float_get : mltype -> float list -> mlattribute
+      val double_get : mltype -> float list -> mlattribute
 
       (** Creates a dense elements attribute with the given shaped type from string elements. *)
-      val string_get : Type.t -> string list -> Attribute.t
+      val string_get : mltype -> string list -> mlattribute
 
       (** Creates a dense elements attribute that has the same data as the given dense elements attribute and a different shaped type. The new type must have the same total number of elements. *)
-      val reshape_get : Attribute.t -> Type.t -> Attribute.t
+      val reshape_get : mlattribute -> mltype -> mlattribute
 
-      (** Checks whether the given dense elements attribute contains a single replicated value (splat). *)
-      val is_splat : Attribute.t -> bool
+      (** Checks whether the given dense elements attribute contains a single replicated  (splat). *)
+      val is_splat : mlattribute -> bool
 
-      (** Returns the single replicated value (splat) of a specific type contained by the given dense elements attribute. *)
-      val splat_value : Attribute.t -> Attribute.t
+      (** Returns the single replicated  (splat) of a specific type contained by the given dense elements attribute. *)
+      val splat_value : mlattribute -> mlattribute
 
-      val bool_splat_value : Attribute.t -> int
-      val int32_splat_value : Attribute.t -> int
-      val uint32_splat_value : Attribute.t -> int
-      val int64_splat_value : Attribute.t -> int
-      val uint64_splat_value : Attribute.t -> int
-      val float_splat_value : Attribute.t -> float
-      val double_splat_value : Attribute.t -> float
+      val bool_splat_value : mlattribute -> int
+      val int32_splat_value : mlattribute -> int
+      val uint32_splat_value : mlattribute -> int
+      val int64_splat_value : mlattribute -> int
+      val uint64_splat_value : mlattribute -> int
+      val float_splat_value : mlattribute -> float
+      val double_splat_value : mlattribute -> float
 
-      (** Returns the pos-th value (flat contiguous indexing) of a specific type contained by the given dense elements attribute. *)
-      val bool_value : Attribute.t -> int -> bool
+      (** Returns the pos-th  (flat contiguous indexing) of a specific type contained by the given dense elements attribute. *)
+      val bool_value : mlattribute -> int -> bool
 
-      val int32_value : Attribute.t -> int -> int
-      val uint32_value : Attribute.t -> int -> int
-      val int64_value : Attribute.t -> int -> int
-      val uint64_value : Attribute.t -> int -> int
-      val float_value : Attribute.t -> int -> float
-      val double_value : Attribute.t -> int -> float
-      val string_value : Attribute.t -> int -> string
+      val int32_value : mlattribute -> int -> int
+      val uint32_value : mlattribute -> int -> int
+      val int64_value : mlattribute -> int -> int
+      val uint64_value : mlattribute -> int -> int
+      val float_value : mlattribute -> int -> float
+      val double_value : mlattribute -> int -> float
+      val string_value : mlattribute -> int -> string
 
       (* Returns the raw data of the given dense elements attribute. *)
-      (* val raw_data : Attribute.t -> unit *)
+      (* val raw_data : mlattribute -> unit *)
     end
 
     module Opaque : sig
-      (* TODO: expose Dialect to the bindings and implement accessors here. *)
+      (* TODO: expose mldialecto the bindings and implement accessors here. *)
 
       (** Checks whether the given attribute is an opaque elements attribute. *)
-      val is_opaque : Attribute.t -> bool
+      val is_opaque : mlattribute -> bool
     end
 
     module Sparse : sig
-      open IR
-
       (** Checks whether the given attribute is a sparse elements attribute. *)
-      val is_sparse : Attribute.t -> bool
+      val is_sparse : mlattribute -> bool
 
-      (** Creates a sparse elements attribute of the given shape from a list of indices and a list of associated values. Both lists are expected to be dense elements attributes with the same number of elements. The list of indices is expected to contain 64-bit integers. The attribute is created in the same context as the type. *)
-      val create : Type.t -> Attribute.t -> Attribute.t -> Attribute.t
+      (** Creates a sparse elements attribute of the given shape from a list of indices and a list of associated s. Both lists are expected to be dense elements attributes with the same number of elements. The list of indices is expected to contain 64-bit integers. The attribute is created in the same context as the type. *)
+      val create : mltype -> mlattribute -> mlattribute -> mlattribute
 
       (** Returns the dense elements attribute containing 64-bit integer indices of non-null elements in the given sparse elements attribute. *)
-      val indices : Attribute.t -> Attribute.t
+      val indices : mlattribute -> mlattribute
 
       (** Returns the dense elements attribute containing the non-null elements in the given sparse elements attribute. *)
-      val values : Attribute.t -> Attribute.t
+      val values : mlattribute -> mlattribute
     end
   end
 end
 
 and AffineExpr : sig
-  open IR
-
   type t
 
   (** Gets the context that owns the affine expression. *)
-  val context : t -> Context.t
+  val context : t -> mlcontext
 
   (** Prints an affine expression by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
   val print : callback:(string -> unit) -> t -> unit
@@ -715,7 +694,7 @@ and AffineExpr : sig
 
   module Dimension : sig
     (** Creates an affine dimension expression with 'position' in the context. *)
-    val get : Context.t -> int -> t
+    val get : mlcontext -> int -> t
 
     (** Returns the position of the given affine dimension expression. *)
     val position : t -> int
@@ -723,7 +702,7 @@ and AffineExpr : sig
 
   module Symbol : sig
     (** Creates an affine symbol expression with 'position' in the context. *)
-    val get : Context.t -> int -> t
+    val get : mlcontext -> int -> t
 
     (** Returns the position of the given affine symbol expression. *)
     val position : t -> int
@@ -731,9 +710,9 @@ and AffineExpr : sig
 
   module Constant : sig
     (** Creates an affine constant expression with 'constant' in the context. *)
-    val get : Context.t -> int -> t
+    val get : mlcontext -> int -> t
 
-    (** Returns the value of the given affine constant expression. *)
+    (** Returns the  of the given affine constant expression. *)
     val value : t -> int
   end
 
@@ -787,12 +766,10 @@ and AffineExpr : sig
 end
 
 and AffineMap : sig
-  open IR
-
   type t
 
   (** Gets the context that the given affine map was created with *)
-  val context : t -> Context.t
+  val context : t -> mlcontext
 
   (** Checks whether an affine map is null. *)
   val is_null : t -> bool
@@ -807,22 +784,22 @@ and AffineMap : sig
   val dump : t -> unit
 
   (** Creates a zero result affine map with no dimensions or symbols in the context. The affine map is owned by the context. *)
-  val empty : Context.t -> t
+  val empty : mlcontext -> t
 
   (** Creates a zero result affine map of the given dimensions and symbols in the context. The affine map is owned by the context. *)
-  val get : Context.t -> int -> int -> t
+  val get : mlcontext -> int -> int -> t
 
   (** Creates a single constant result affine map in the context. The affine map is owned by the context. *)
-  val constant : Context.t -> int -> t
+  val constant : mlcontext -> int -> t
 
   (** Creates an affine map with 'numDims' identity in the context. The affine map is owned by the context. *)
-  val multi_dim_identity : Context.t -> int -> t
+  val multi_dim_identity : mlcontext -> int -> t
 
   (** Creates an identity affine map on the most minor dimensions in the context. The affine map is owned by the context. The function asserts that the number of dimensions is greater or equal to the number of results. *)
-  val minor_identity : Context.t -> int -> int -> t
+  val minor_identity : mlcontext -> int -> int -> t
 
   (** Creates an affine map with a permutation expression and its size in the context. The permutation expression is a non-empty vector of integers. The elements of the permutation vector must be continuous from 0 and cannot be repeated (i.e. `[1,2,0]` is a valid permutation. `[2,0]` or `[1,1,2]` is an invalid invalid permutation.) The affine map is owned by the context. *)
-  val permutation : Context.t -> int list -> t
+  val permutation : mlcontext -> int list -> t
 
   (** Checks whether the given affine map is an identity affine map. The function asserts that the number of dimensions is greater or equal to the number of results. *)
   val is_identity : t -> bool
@@ -869,100 +846,88 @@ and AffineMap : sig
 end
 
 module StandardDialect : sig
-  open IR
-
   (** Registers the Standard dialect with the given context. This allows the dialect to be loaded dynamically if needed when parsing. *)
-  val register_standard_dialect : Context.t -> unit
+  val register_standard_dialect : mlcontext -> unit
 
   (** Loads the Standard dialect into the given context. The dialect does _not_ have to be registered in advance. *)
-  val load_standard_dialect : Context.t -> Dialect.t
+  val load_standard_dialect : mlcontext -> mldialect
 
   (** Returns the namespace of the Standard dialect, suitable for loading it. *)
   val namespace : unit -> string
 end
 
-module rec Pass : sig
-  type t
-end
-
-and PassManager : sig
-  open IR
-
-  type t
-
+module PassManager : sig
   (** Create a new top-level PassManager. *)
-  val create : Context.t -> t
+  val create : mlcontext -> mlpassmanager
 
   (** Destroy the provided PassManager. *)
-  val destroy : t -> unit
+  val destroy : mlpassmanager -> unit
 
   (** Checks if a PassManager is null. *)
-  val is_null : t -> bool
+  val is_null : mlpassmanager -> bool
 
   (** Cast a top-level PassManager to a generic OpPassManager. *)
-  val to_op_pass_manager : t -> OpPassManager.t
+  val to_op_pass_manager : mlpassmanager -> mloppassmanager
 
   (** Run the provided `passManager` on the given `module`. *)
-  val run : t -> Module.t -> bool
+  val run : mlpassmanager -> mlmodule -> bool
 
   (** Nest an OpPassManager under the top-level PassManager, the nested passmanager will only run on operations matching the provided name. The returned OpPassManager will be destroyed when the parent is destroyed. To further nest more OpPassManager under the newly returned one, see `mlirOpPassManagerNest` below. *)
-  val nested_under : t -> string -> OpPassManager.t
+  val nested_under : mlpassmanager -> string -> mloppassmanager
 
   (** Add a pass and transfer ownership to the provided top-level mlirPassManager. If the pass is not a generic operation pass or a ModulePass, a new OpPassManager is implicitly nested under the provided PassManager. *)
-  val add_owned_pass : t -> Pass.t -> unit
+  val add_owned_pass : mlpassmanager -> mlpass -> unit
 end
 
-and OpPassManager : sig
-  type t
-
+module OpPassManager : sig
   (** Nest an OpPassManager under the provided OpPassManager, the nested passmanager will only run on operations matching the provided name. The returned OpPassManager will be destroyed when the parent is destroyed. *)
-  val nested_under : t -> string -> t
+  val nested_under : mloppassmanager -> string -> mloppassmanager
 
   (** Add a pass and transfer ownership to the provided mlirOpPassManager. If the pass is not a generic operation pass or matching the type of the provided PassManager, a new OpPassManager is implicitly nested under the provided PassManager. *)
-  val add_owned_pass : t -> Pass.t -> unit
+  val add_owned_pass : mloppassmanager -> mlpass -> unit
 
   (** Print a textual MLIR pass pipeline by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
-  val print_pass_pipeline : callback:(string -> unit) -> t -> unit
+  val print_pass_pipeline : callback:(string -> unit) -> mloppassmanager -> unit
 
   (** Parse a textual MLIR pass pipeline and add it to the provided OpPassManager. *)
-  val parse_pass_pipeline : t -> string -> bool
+  val parse_pass_pipeline : mloppassmanager -> string -> bool
 end
 
 module Transforms : sig
   val register_passes : unit -> unit
 
-  module AffineLoopFusion : Transforms_intf.Sig with type t := Pass.t
-  module AffinePipelineDataTransfer : Transforms_intf.Sig with type t := Pass.t
-  module BufferDeallocation : Transforms_intf.Sig with type t := Pass.t
-  module BufferHoisting : Transforms_intf.Sig with type t := Pass.t
-  module BufferLoopHoisting : Transforms_intf.Sig with type t := Pass.t
-  module BufferResultsToOutParams : Transforms_intf.Sig with type t := Pass.t
-  module CSE : Transforms_intf.Sig with type t := Pass.t
-  module Canonicalizer : Transforms_intf.Sig with type t := Pass.t
-  module CopyRemoval : Transforms_intf.Sig with type t := Pass.t
-  module FinalizingBufferize : Transforms_intf.Sig with type t := Pass.t
-  module Inliner : Transforms_intf.Sig with type t := Pass.t
-  module LocationSnapshot : Transforms_intf.Sig with type t := Pass.t
-  module LoopCoalescing : Transforms_intf.Sig with type t := Pass.t
-  module LoopInvariantCodeMotion : Transforms_intf.Sig with type t := Pass.t
-  module MemRefDataFlowOpt : Transforms_intf.Sig with type t := Pass.t
-  module NormlizeMemRefs : Transforms_intf.Sig with type t := Pass.t
-  module ParallelLoopCollapsing : Transforms_intf.Sig with type t := Pass.t
-  module PrintCFG : Transforms_intf.Sig with type t := Pass.t
-  module PrintOp : Transforms_intf.Sig with type t := Pass.t
-  module PrintOpStats : Transforms_intf.Sig with type t := Pass.t
-  module PromoteBuffersToStack : Transforms_intf.Sig with type t := Pass.t
-  module SCCP : Transforms_intf.Sig with type t := Pass.t
-  module StripDebugInfo : Transforms_intf.Sig with type t := Pass.t
-  module SymbolDCE : Transforms_intf.Sig with type t := Pass.t
+  module AffineLoopFusion : Transforms_intf.Sig with type t := mlpass
+  module AffinePipelineDataTransfer : Transforms_intf.Sig with type t := mlpass
+  module BufferDeallocation : Transforms_intf.Sig with type t := mlpass
+  module BufferHoisting : Transforms_intf.Sig with type t := mlpass
+  module BufferLoopHoisting : Transforms_intf.Sig with type t := mlpass
+  module BufferResultsToOutParams : Transforms_intf.Sig with type t := mlpass
+  module CSE : Transforms_intf.Sig with type t := mlpass
+  module Canonicalizer : Transforms_intf.Sig with type t := mlpass
+  module CopyRemoval : Transforms_intf.Sig with type t := mlpass
+  module FinalizingBufferize : Transforms_intf.Sig with type t := mlpass
+  module Inliner : Transforms_intf.Sig with type t := mlpass
+  module LocationSnapshot : Transforms_intf.Sig with type t := mlpass
+  module LoopCoalescing : Transforms_intf.Sig with type t := mlpass
+  module LoopInvariantCodeMotion : Transforms_intf.Sig with type t := mlpass
+  module MemRefDataFlowOpt : Transforms_intf.Sig with type t := mlpass
+  module NormlizeMemRefs : Transforms_intf.Sig with type t := mlpass
+  module ParallelLoopCollapsing : Transforms_intf.Sig with type t := mlpass
+  module PrintCFG : Transforms_intf.Sig with type t := mlpass
+  module PrintOp : Transforms_intf.Sig with type t := mlpass
+  module PrintOpStats : Transforms_intf.Sig with type t := mlpass
+  module PromoteBuffersToStack : Transforms_intf.Sig with type t := mlpass
+  module SCCP : Transforms_intf.Sig with type t := mlpass
+  module StripDebugInfo : Transforms_intf.Sig with type t := mlpass
+  module SymbolDCE : Transforms_intf.Sig with type t := mlpass
 end
 
 (** Registers all dialects known to core MLIR with the provided Context.
    This is needed before creating IR for these Dialects. *)
-val register_all_dialects : IR.Context.t -> unit
+val register_all_dialects : mlcontext -> unit
 
 (** [with_context f]  creates a context [ctx], applies [f] to it, destroys it and returns the result of applying [f] *)
-val with_context : (IR.Context.t -> 'a) -> 'a
+val with_context : (mlcontext -> 'a) -> 'a
 
 (** [with_pass_manager f ctx]  creates a Pass Manager [pm] for the given context [ctx], applies [f] to it, destroys it and returns the result of applying [f] *)
-val with_pass_manager : f:(PassManager.t -> 'a) -> IR.Context.t -> 'a
+val with_pass_manager : f:(mlpassmanager -> 'a) -> mlcontext -> 'a
