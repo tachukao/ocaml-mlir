@@ -66,7 +66,7 @@ module Bindings (F : FOREIGN) = struct
 
 
     (* Returns the position of the given affine dimension expression. *)
-    let get_position =
+    let position =
       foreign "mlirAffineDimExprGetPosition" (Typs.AffineExpr.t @-> returning intptr_t)
   end
 
@@ -82,7 +82,7 @@ module Bindings (F : FOREIGN) = struct
 
 
     (* Returns the position of the given affine symbol expression. *)
-    let get_position =
+    let position =
       foreign "mlirAffineSymbolExprGetPosition" (Typs.AffineExpr.t @-> returning intptr_t)
   end
 

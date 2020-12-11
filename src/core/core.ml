@@ -445,6 +445,42 @@ module BuiltinAttributes = struct
   end
 end
 
+module AffineExpr = struct
+  type t = Typs.AffineExpr.t structured
+
+  include Bindings.AffineExpr
+
+  let print ~callback x =
+    let callback s _ = callback (getf s Typs.StringRef.data) in
+    print x callback null
+
+
+  let largest_known_divisor x = largest_known_divisor x |> Int64.to_int
+  let is_multiple_of x i = is_multiple_of x Int64.(of_int i)
+  let is_function_of_dim x i = is_function_of_dim x Intptr.(of_int i)
+
+  module Dimension = struct
+    include Bindings.AffineExpr.Dimension
+
+    let get ctx i = get ctx Intptr.(of_int i)
+    let position x = position x |> Intptr.to_int
+  end
+
+  module Symbol = struct
+    include Bindings.AffineExpr.Symbol
+
+    let get ctx i = get ctx Intptr.(of_int i)
+    let position x = position x |> Intptr.to_int
+  end
+
+  module Constant = struct
+    include Bindings.AffineExpr.Constant
+
+    let get ctx i = get ctx Int64.(of_int i)
+    let value x = value x |> Int64.to_int
+  end
+end
+
 module AffineMap = struct
   type t = Typs.AffineMap.t structured
 

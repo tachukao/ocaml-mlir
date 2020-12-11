@@ -666,6 +666,108 @@ and BuiltinAttributes : sig
   end
 end
 
+and AffineExpr : sig
+  open IR
+
+  type t
+
+  (** Gets the context that owns the affine expression. *)
+  val context : t -> Context.t
+
+  (** Prints an affine expression by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
+  val print : callback:(string -> unit) -> t -> unit
+
+  (** Prints the affine expression to the standard error stream. *)
+  val dump : t -> unit
+
+  (** Checks whether the given affine expression is made out of only symbols and constants. *)
+  val is_symbolic_or_constant : t -> bool
+
+  (** Checks whether the given affine expression is a pure affine expression, i.e. mul, floordiv, ceildic, and mod is only allowed w.r.t constants. *)
+  val is_pure_affine : t -> bool
+
+  (** Returns the greatest known integral divisor of this affine expression. The result is always positive. *)
+  val largest_known_divisor : t -> int
+
+  (** Checks whether the given affine expression is a multiple of 'factor'. *)
+  val is_multiple_of : t -> int -> bool
+
+  (** Checks whether the given affine expression involves AffineDimExpr 'position'. *)
+  val is_function_of_dim : t -> int -> bool
+
+  module Dimension : sig
+    (** Creates an affine dimension expression with 'position' in the context. *)
+    val get : Context.t -> int -> t
+
+    (** Returns the position of the given affine dimension expression. *)
+    val position : t -> int
+  end
+
+  module Symbol : sig
+    (** Creates an affine symbol expression with 'position' in the context. *)
+    val get : Context.t -> int -> t
+
+    (** Returns the position of the given affine symbol expression. *)
+    val position : t -> int
+  end
+
+  module Constant : sig
+    (** Creates an affine constant expression with 'constant' in the context. *)
+    val get : Context.t -> int -> t
+
+    (** Returns the value of the given affine constant expression. *)
+    val value : t -> int
+  end
+
+  module Add : sig
+    (** Checks whether the given affine expression is an add expression. *)
+    val is_add : t -> bool
+
+    (** Creates an affine add expression with 'lhs' and 'rhs'. *)
+    val get : t -> t -> t
+  end
+
+  module Mul : sig
+    (** Checks whether the given affine expression is an mul expression. *)
+    val is_mul : t -> bool
+
+    (** Creates an affine mul expression with 'lhs' and 'rhs'. *)
+    val get : t -> t -> t
+  end
+
+  module Mod : sig
+    (** Checks whether the given affine expression is an mod expression. *)
+    val is_mod : t -> bool
+
+    (** Creates an affine mod expression with 'lhs' and 'rhs'. *)
+    val get : t -> t -> t
+  end
+
+  module FloorDiv : sig
+    (** Checks whether the given affine expression is an floordiv expression. *)
+    val is_floor_div : t -> bool
+
+    (** Creates an affine floordiv expression with 'lhs' and 'rhs'. *)
+    val get : t -> t -> t
+  end
+
+  module CeilDiv : sig
+    (** Checks whether the given affine expression is an ceildiv expression. *)
+    val is_ceildiv : t -> bool
+
+    (** Creates an affine ceildiv expression with 'lhs' and 'rhs'. *)
+    val get : t -> t -> t
+  end
+
+  module BinaryOp : sig
+    (** Returns the left hand side affine expression of the given affine binary operation expression. *)
+    val lhs : t -> t
+
+    (** Returns the right hand side affine expression of the given affine binary operation expression. *)
+    val rhs : t -> t
+  end
+end
+
 and AffineMap : sig
   open IR
 
