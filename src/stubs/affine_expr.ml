@@ -170,7 +170,7 @@ module Bindings (F : FOREIGN) = struct
 
   module CeilDiv = struct
     (* Checks whether the given affine expression is an ceildiv expression. *)
-    let is_ceildiv =
+    let is_ceil_div =
       foreign "mlirAffineExprIsACeilDiv" (Typs.AffineExpr.t @-> returning bool)
 
 

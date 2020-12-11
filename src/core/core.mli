@@ -771,7 +771,7 @@ and AffineExpr : sig
 
   module CeilDiv : sig
     (** Checks whether the given affine expression is an ceildiv expression. *)
-    val is_ceildiv : t -> bool
+    val is_ceil_div : t -> bool
 
     (** Creates an affine ceildiv expression with 'lhs' and 'rhs'. *)
     val get : t -> t -> t

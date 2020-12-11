@@ -293,10 +293,76 @@ let print_builtin_attributes ctx =
   Attribute.dump str
 
 
-
-
 let print_affine_map ctx = ignore ctx
-let print_affine_expr ctx = ignore ctx
+
+let print_affine_expr ctx =
+  let dim = AffineExpr.Dimension.get ctx 5 in
+  let symbol = AffineExpr.Symbol.get ctx 5 in
+  let const = AffineExpr.Constant.get ctx 5 in
+  let add = AffineExpr.Add.get dim symbol in
+  let mul = AffineExpr.Mul.get dim symbol in
+  let modu = AffineExpr.Mod.get dim symbol in
+  let floordiv = AffineExpr.FloorDiv.get dim symbol in
+  let ceildiv = AffineExpr.CeilDiv.get dim symbol in
+  Printf.printf "@affineExpr\n%!";
+  AffineExpr.dump dim;
+  AffineExpr.dump symbol;
+  AffineExpr.dump const;
+  AffineExpr.dump add;
+  AffineExpr.dump mul;
+  AffineExpr.dump modu;
+  AffineExpr.dump floordiv;
+  AffineExpr.dump ceildiv;
+  AffineExpr.dump AffineExpr.BinaryOp.(lhs add);
+  AffineExpr.dump AffineExpr.BinaryOp.(rhs add);
+  assert (AffineExpr.Dimension.position dim = 5);
+  assert (AffineExpr.Symbol.position symbol = 5);
+  assert (AffineExpr.Constant.value const = 5);
+  assert (not AffineExpr.(is_symbolic_or_constant dim));
+  assert (AffineExpr.(is_symbolic_or_constant symbol));
+  assert (AffineExpr.(is_symbolic_or_constant const));
+  assert (not AffineExpr.(is_symbolic_or_constant add));
+  assert (not AffineExpr.(is_symbolic_or_constant mul));
+  assert (not AffineExpr.(is_symbolic_or_constant modu));
+  assert (not AffineExpr.(is_symbolic_or_constant floordiv));
+  assert (not AffineExpr.(is_symbolic_or_constant ceildiv));
+  assert (AffineExpr.(is_pure_affine dim));
+  assert (AffineExpr.(is_pure_affine symbol));
+  assert (AffineExpr.(is_pure_affine const));
+  assert (AffineExpr.(is_pure_affine add));
+  assert (not AffineExpr.(is_pure_affine mul));
+  assert (not AffineExpr.(is_pure_affine modu));
+  assert (not AffineExpr.(is_pure_affine floordiv));
+  assert (not AffineExpr.(is_pure_affine ceildiv));
+  assert (not AffineExpr.(largest_known_divisor dim <> 1));
+  assert (not AffineExpr.(largest_known_divisor symbol <> 1));
+  assert (not AffineExpr.(largest_known_divisor const <> 5));
+  assert (not AffineExpr.(largest_known_divisor add <> 1));
+  assert (not AffineExpr.(largest_known_divisor mul <> 1));
+  assert (not AffineExpr.(largest_known_divisor modu <> 1));
+  assert (not AffineExpr.(largest_known_divisor floordiv <> 1));
+  assert (not AffineExpr.(largest_known_divisor ceildiv <> 1));
+  assert (AffineExpr.(is_multiple_of dim 1));
+  assert (AffineExpr.(is_multiple_of symbol 1));
+  assert (AffineExpr.(is_multiple_of const 5));
+  assert (AffineExpr.(is_multiple_of add 1));
+  assert (AffineExpr.(is_multiple_of mul 1));
+  assert (AffineExpr.(is_multiple_of modu 1));
+  assert (AffineExpr.(is_multiple_of floordiv 1));
+  assert (AffineExpr.(is_multiple_of ceildiv 1));
+  assert (AffineExpr.(is_function_of_dim dim 5));
+  assert (not AffineExpr.(is_function_of_dim symbol 5));
+  assert (not AffineExpr.(is_function_of_dim const 5));
+  assert (AffineExpr.(is_function_of_dim add 5));
+  assert (AffineExpr.(is_function_of_dim mul 5));
+  assert (AffineExpr.(is_function_of_dim modu 5));
+  assert (AffineExpr.(is_function_of_dim floordiv 5));
+  assert (AffineExpr.(is_function_of_dim ceildiv 5));
+  assert (AffineExpr.Add.is_add add);
+  assert (AffineExpr.Mul.is_mul mul);
+  assert (AffineExpr.FloorDiv.is_floor_div floordiv);
+  assert (AffineExpr.CeilDiv.is_ceil_div ceildiv)
+
 
 let register_only_std ctx =
   assert (Context.(num_loaded_dialects ctx = 1));
@@ -382,7 +448,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   with_context print_builtin_attributes;
-  [%expect {|
+  [%expect
+    {|
   @attrs
   2.000000e+00 : f64
   f64
@@ -399,7 +466,18 @@ let%expect_test _ =
 
 let%expect_test _ =
   with_context print_affine_expr;
-  [%expect {|
-  |}]
+  [%expect
+    {|
+  @affineExpr
+  d5
+  s5
+  5
+  d5 + s5
+  d5 * s5
+  d5 mod s5
+  d5 floordiv s5
+  d5 ceildiv s5
+  d5
+  s5 |}]
 
 let%test_unit _ = with_context register_only_std
